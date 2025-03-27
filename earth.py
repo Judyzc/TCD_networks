@@ -2,10 +2,10 @@ import socket
 import time
 from lunar_packet import LunarPacket
 
-EARTH_IP = "192.168.1.102"  # This machine's IP
-LUNAR_IP = "192.168.1.101"  # Laptop A's IP
+LUNAR_IP = "192.168.1.101"  # Laptop A
+EARTH_IP = "192.168.1.102"  # Laptop B
+LUNAR_PORT = 6000
 EARTH_PORT = 5000
-LUNAR_PORT = 6000  # Send ACKs to Lunar
 
 def receive_packet():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

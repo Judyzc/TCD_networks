@@ -5,7 +5,7 @@ from lunar_packet import LunarPacket
 
 LUNAR_IP = "192.168.1.101"  # Laptop A
 EARTH_IP = "192.168.1.102"  # Laptop B
-LUNAR_PORT = 6000  # Send ACKs to Lunar
+LUNAR_PORT = 6000 
 EARTH_PORT = 5000
 
 def send_packet(packet):
