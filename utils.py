@@ -12,7 +12,7 @@ def timefunc(func):
     return inner
 
 
-def mac_addr(bytestring):
-    """Needs linux."""
-    return ':'.join('{:02x}'.format(piece) for piece in bytestring).upper()
+# def mac_addr(bytestring):
+#     """Needs linux."""
+#     return ':'.join('{:02x}'.format(piece) for piece in bytestring).upper()
 

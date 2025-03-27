@@ -1,28 +1,23 @@
 import socket
 import time
 from lunar_packet import LunarPacket
-
-LUNAR_IP = "10.6.xx.xx"  # Laptop A
-EARTH_IP = "10.6.xx.xx"  # Laptop B
-LUNAR_PORT = 5001
-EARTH_PORT = 5002
+from env_variables import *
 
 def receive_packet():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((EARTH_IP, EARTH_PORT))  # Bind to Earth IP
         s.listen(1)  # Listen for 1 connection (TCP)
         print("[EARTH] Waiting for connection...")
-        conn, addr = s.accept()  # Accept a connection
+        conn, addr = s.accept() 
         with conn:
             print(f"[EARTH] Connection established with {addr}")
             while True:
                 data = conn.recv(1024)
                 if not data:
                     break
-                packet_id, packet_type, temperature, timestamp, is_valid = LunarPacket.parse(data)
 
-                print(f"[EARTH] Received -> ID: {packet_id}, Temp: {temperature:.2f}°C, Checksum Valid: {is_valid}")
-
+                packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
+                print(f"[EARTH] Received -> ID: {packet_id}, Type: {packet_type}, Data: {data:.2f}, Timestamp: {timestamp}")
                 send_ack(packet_id, conn)
 
 def send_ack(packet_id, conn):

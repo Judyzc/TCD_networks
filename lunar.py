@@ -2,17 +2,13 @@ import socket
 import time
 import random
 from lunar_packet import LunarPacket
-
-LUNAR_IP = "10.6.xx.xx"  # Laptop A
-EARTH_IP = "10.6.xx.xx"  # Laptop B
-LUNAR_PORT = 5001
-EARTH_PORT = 5002
+from env_variables import *
 
 def send_packet(packet):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((EARTH_IP, EARTH_PORT))  # Connect to Earth
         s.sendall(packet.build())  # Send the built packet
-        print(f"[LUNAR] Sent Packet ID={packet.packet_id}, Temp={packet.temperature:.2f}°C")
+        print(f"[LUNAR] Sent Packet ID={packet.packet_id}, Data={packet.data:.2f}")
 
 def receive_ack():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -26,8 +22,8 @@ def receive_ack():
 
 if __name__ == "__main__":
     for i in range(5):  # Send 5 packets
-        temp = round(random.uniform(-50, 50), 2)
-        packet = LunarPacket(packet_id=i, packet_type=0, temperature=temp)
+        data = round(random.uniform(-50, 50), 2)
+        packet = LunarPacket(packet_id=i, packet_type=0, data=data)
         send_packet(packet)
         time.sleep(1)
 
