@@ -3,10 +3,10 @@ import time
 import random
 from lunar_packet import LunarPacket
 
-LUNAR_IP = "192.168.1.101"  # Laptop A
-EARTH_IP = "192.168.1.102"  # Laptop B
-LUNAR_PORT = 6000 
-EARTH_PORT = 5000
+LUNAR_IP = "10.6.xx.xx"  # Laptop A
+EARTH_IP = "10.6.xx.xx"  # Laptop B
+LUNAR_PORT = 5001
+EARTH_PORT = 5002
 
 def send_packet(packet):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
