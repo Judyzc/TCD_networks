@@ -2,6 +2,7 @@ import socket
 import time
 from lunar_packet import LunarPacket
 from env_variables import *
+import channel_simulation as channel
 
 def receive_packet():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -23,7 +24,12 @@ def receive_packet():
 def send_ack(packet_id, conn):
     ack_message = f"ACK for Packet {packet_id}"
     conn.sendall(ack_message.encode())
-    print(f"[EARTH] Sent ACK for Packet {packet_id}")
+    # Simulate channel dealy with threading
+    not_dropped = channel.send_w_delay_loss(conn, ack_message.encode())
+    if not_dropped:
+        print(f"[EARTH] Sent ACK for Packet {packet_id}")
+    else: 
+        print(f"[EARTH] LOST ACK for Packet {packet_id}")
 
 if __name__ == "__main__":
     receive_packet()

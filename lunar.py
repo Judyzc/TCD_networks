@@ -3,12 +3,18 @@ import time
 import random
 from lunar_packet import LunarPacket
 from env_variables import *
+import channel_simulation as channel
 
 def send_packet(packet):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((EARTH_IP, EARTH_PORT))  # Connect to Earth
-        s.sendall(packet.build())  # Send the built packet
-        print(f"[LUNAR] Sent Packet ID={packet.packet_id}, Data={packet.data:.2f}")
+        
+        # Simulate channel dealy with threading
+        not_lost = channel.send_w_delay_loss(s, packet.build())
+        if not_lost:
+            print(f"[LUNAR] Sent Packet ID={packet.packet_id}, Data={packet.data:.2f}")
+        else:
+            print(f"[LUNAR] LOST Packet ID={packet.packet_id}, Data={packet.data:.2f}")
 
 def receive_ack():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
