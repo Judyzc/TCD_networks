@@ -1,12 +1,12 @@
-LUNAR_IP = "0.0.0.0"  # Laptop A
-EARTH_IP = "172.20.10.6"  # Laptop B
+LUNAR_IP = "127.0.0.1"  # Laptop A
+EARTH_IP = "127.0.0.1"  # Laptop B
 LUNAR_PORT = 5001
-EARTH_PORT = 5102
+EARTH_PORT = 5101
 
 # Channel factors
 MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay
 LATENCY_JITTER_FACTOR = 0.1 # Variation in travel time 
-PACKET_LOSS_PROBABILITY = 0.05
+PACKET_LOSS_PROBABILITY = 0.5
 PACKET_LOSS_FACTOR = 0.1
 BER = 0.001
 

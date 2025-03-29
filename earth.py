@@ -4,21 +4,16 @@ from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
-# UDP socket
-UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-UDP_SOCKET.bind((EARTH_IP, EARTH_PORT))
-
-
 def send_ack(packet_id, address):
     """Return ACK for Lunar Packet to Moon w/ random loss."""
 
     ack_message = str(packet_id).encode()
-    not_dropped = channel.send_w_delay_loss(UDP_SOCKET, ack_message, address)  
+    not_dropped = channel.send_w_delay_loss(UDP_SOCKET, ack_message, address, packet_id)  
     # actual sending is done in the channel_send_w_dalay_loss function
     if not_dropped:
-        print(f"[EARTH] Sent ACK for Packet {packet_id}")
+        print(f"[EARTH] ID={packet_id} *ACK Sent*")
     else: 
-        print(f"[EARTH] LOST ACK for Packet {packet_id}")
+        print(f"[EARTH] ID={packet_id} *ACK LOST*")
 
 
 def parse_system_status(data):
@@ -38,14 +33,14 @@ def decode_timestamp(timestamp):
 def receive_packet():
     """Receive Lunar Packets from Moon through TCP with a persistent connection."""
     
-    print("[EARTH] Listening for incoming UDP packets...")
+    print("[EARTH] Listening for incoming UDP packets...\n\n")
     while True:
         try: 
             data, address = UDP_SOCKET.recvfrom(1024) 
             parsed_packet = LunarPacket.parse(data) # MIGHT BE NONE -> with checksum
 
             if parsed_packet is None:
-                print("[ERROR] Checksum, invalid packet received, skipping...")
+                print("[EARTH] ID: {packet_id} *CHECKSUM INVALID* -> skipping")
                 continue  # Checksum error, skip to next iteration
 
             # Could throw error here 
@@ -57,11 +52,11 @@ def receive_packet():
             timestamp_str = decode_timestamp(timestamp)
 
             if packet_type == 0:  # Temperature
-                print(f"Received Temperature: {data_value:.2f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
+                print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
 
             elif packet_type == 1:  # System status
                 battery, sys_temp = parse_system_status(data_value)
-                print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
+                print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
 
             send_ack(packet_id, address)  # Send ACK back to sender
         except Exception as e:
@@ -69,4 +64,14 @@ def receive_packet():
 
 
 if __name__ == "__main__":
-    receive_packet()
+    try:
+        # UDP socket
+        UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        UDP_SOCKET.bind((EARTH_IP, EARTH_PORT))
+        receive_packet()
+    except Exception as e:
+        print(f"[EARTH ERROR] {e} ")
+    finally:
+        if 'UDP_SOCKET' in locals() and UDP_SOCKET:
+            UDP_SOCKET.close()
+        print("[EARTH] Socket closed and program exited")
