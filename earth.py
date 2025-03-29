@@ -1,3 +1,4 @@
+import threading
 import socket
 import time
 from lunar_packet import LunarPacket
@@ -5,55 +6,64 @@ from env_variables import *
 import channel_simulation as channel
 
 def send_ack(packet_id, conn):
-    """Return ACK for Lunar Packet to Moon w/ random loss."""
-
+    """Send ACK for received Lunar Packet."""
     ack_message = str(packet_id)
-    not_dropped = channel.send_w_delay_loss(conn, ack_message.encode()) # actual sending is done in the channel_send_w_dalay_loss function
+    not_dropped = channel.send_w_delay_loss(conn, ack_message.encode())
     if not_dropped:
         print(f"[EARTH] Sent ACK for Packet {packet_id}")
-    else: 
+    else:
         print(f"[EARTH] LOST ACK for Packet {packet_id}")
 
-
-def parse_system_status(data):
-    """Extract battery and system temperature from a LunarPacket."""
-
-    battery = int(data)  # Extract integer part as battery
-    sys_temp = (data - battery) * 1000 - 40  # Extract decimal part and shift back
-    return battery, sys_temp
-
-def decode_timestamp(timestamp):
-    """Convert Unix timestamp to human-readable format."""
-    return time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(timestamp))
-
 def receive_packet():
-    """Receive Lunar Packets from Moon through TCP with a persistent connection."""
+    """Receives telemetry data from the Lunar Rover."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((EARTH_IP, EARTH_PORT))
-        s.listen(5)  # Allow multiple connections
-        print("[EARTH] Waiting for connection...")
+        s.bind((EARTH_IP, EARTH_RECEIVE_PORT))
+        s.listen(5)
+        print("[EARTH] Waiting for telemetry data...")
 
         while True:
             conn, addr = s.accept()
-            print(f"[EARTH] Connection established with {addr}")
+            print(f"[EARTH] Connected to Lunar Rover at {addr}")
             with conn:
                 while True:
                     data = conn.recv(1024)
                     if not data:
-                        break  # Exit inner loop if connection is closed
+                        break  # Exit loop if connection closes
                     packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
-                    timestamp_str = decode_timestamp(timestamp)
 
-                    if packet_type == 0:  # Temperature, data is temp
-                        print(f"Received Temperature: {data:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
+                    if packet_type == 0:
+                        print(f"Received Temperature: {data:.2f}°C (Packet ID: {packet_id})")
+                    elif packet_type == 1:
+                        battery, sys_temp = int(data), round((data - int(data)) * 1000 - 40, 4)
+                        print(f"System Status: Battery={battery}%, Temp={sys_temp:.2f}°C (Packet ID: {packet_id})")
+                    elif packet_type == 2:
+                        print(f"Received Movement Confirmation: {data} (Packet ID: {packet_id})")
 
-                    elif packet_type == 1:  # System status
-                        battery, sys_temp = parse_system_status(data)
-                        print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
+                    send_ack(packet_id, conn)
 
-                    # print(f"[EARTH] Received -> ID: {packet_id}, Type: {packet_type}, Data: {data:.2f}, Timestamp: {timestamp}")
-                    send_ack(packet_id, conn)  # Send ACK for received packet
+def send_movement_command():
+    """Sends movement commands to the Lunar Rover."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((LUNAR_IP, LUNAR_RECEIVE_PORT))  # Connect to Lunar's movement command port
+        packet_id = 2000
 
+        while True:
+            command = input("Enter command (FORWARD, BACKWARD, LEFT, RIGHT, STOP): ").strip().upper()
+            if command in ["FORWARD", "BACKWARD", "LEFT", "RIGHT", "STOP"]:
+                packet = LunarPacket(packet_id=packet_id, packet_type=2, data=command)
+                channel.send_w_delay_loss(s, packet.build())
+                print(f"[EARTH] Sent Command: {command} (Packet ID: {packet_id})")
+                packet_id += 1
+            else:
+                print("Invalid command. Try again.")
 
+# Run both functions in parallel
 if __name__ == "__main__":
-    receive_packet()
+    recv_thread = threading.Thread(target=receive_packet, daemon=True)
+    send_thread = threading.Thread(target=send_movement_command, daemon=True)
+
+    recv_thread.start()
+    send_thread.start()
+
+    recv_thread.join()
+    send_thread.join()
