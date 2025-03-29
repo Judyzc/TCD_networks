@@ -35,12 +35,17 @@ def send_packet_with_ack(packet, address):
     while time.time() - start_time < 5:
         try:
             ack_data, _ = UDP_SOCKET.recvfrom(1024)  # Receive from any source
-            ack_id = int(ack_data.decode().strip())
-            with lock:
-                acknowledged_packets.add(ack_id)  # Store ACK
-            if ack_id == packet.packet_id:
-                print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
-                return
+            try:
+                ack_id = int(ack_data.decode().strip())
+                with lock:
+                    acknowledged_packets.add(ack_id)  # Store ACK
+                if ack_id == packet.packet_id:
+                    print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
+                    return
+            except (UnicodeDecodeError, ValueError) as e:
+                #handle receipt of corrupted ACKs, if resend and try to get ACK
+                print(f"[LUNAR] ID={packet.packet_id} *CORRUPTED ACK RECVD*")
+
         except socket.timeout:
             pass  # Continue waiting for ACK
 

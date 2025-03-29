@@ -42,7 +42,7 @@ def receive_packet():
             parsed_packet = LunarPacket.parse(data) # MIGHT BE NONE -> with checksum
 
             if parsed_packet is None:
-                print("[EARTH] ID: {packet_id} *CHECKSUM INVALID* -> skipping")
+                print("[EARTH] ID={packet_id} *CHECKSUM INVALID* -> skipping")
                 continue  # Checksum error, skip to next iteration
 
             # Could throw error here 
