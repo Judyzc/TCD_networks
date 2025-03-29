@@ -22,12 +22,16 @@ def parse_system_status(data):
     sys_temp = (data - battery) * 1000 - 40  # Extract decimal part and shift back
     return battery, sys_temp
 
+
 def decode_timestamp(timestamp):
     """Convert Unix timestamp to human-readable format."""
+
     return time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(timestamp))
+
 
 def receive_packet():
     """Receive Lunar Packets from Moon through TCP with a persistent connection."""
+    
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((EARTH_IP, EARTH_PORT))
         s.listen(5)  # Allow multiple connections
