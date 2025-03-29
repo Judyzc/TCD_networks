@@ -26,7 +26,7 @@ def corrupt_data(data, BER):
 
 
 
-def send_w_delay_loss(udp_socket, data, target_address):
+def send_w_delay_loss(udp_socket, data, target_address, packet_id):
     """Send data after simulating transmission delay using a thread."""
             
     # Determine if packet will be lost
@@ -51,13 +51,13 @@ def send_w_delay_loss(udp_socket, data, target_address):
             try:
                 udp_socket.sendto(send_data, target_address)
                 if corrupted:
-                    print(f"[CHANNEL] CORRUPTED Data sent after {total_latency:.2f} seconds delay")
+                    print(f"[CHANNEL] ID={packet_id} *CORRUPTED*   {total_latency:.2f}s")
                 else:
-                    print(f"[CHANNEL] Data sent after {total_latency:.2f} seconds delay")
+                    print(f"[CHANNEL] ID={packet_id} *SENT*        {total_latency:.2f}s")
             except (socket.error) as e:
                 print(f"[CHANNEL ERROR] Failed to send delayed data: {e}")
         else:
-            print(f"[CHANNEL] Packet lost in transmission, probability: {actual_loss_probability: .2f}")
+            print(f"[CHANNEL] ID={packet_id} *LOST*                p:{actual_loss_probability:.2f}")
     
     # Start a new thread to handle the delayed sending
     # without sleeping entire program

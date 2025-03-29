@@ -18,11 +18,11 @@ def send_packet(packet, address):
 
     try:
         packet_data = packet.build()
-        not_lost = channel.send_w_delay_loss(UDP_SOCKET, packet_data, address)
+        not_lost = channel.send_w_delay_loss(UDP_SOCKET, packet_data, address, packet.packet_id)
         if not_lost:
-            print(f"[LUNAR] Sent Packet ID={packet.packet_id}, Data={packet.data:.2f}")
+            print(f"[LUNAR] ID={packet.packet_id} *SENT*")
         else:
-            print(f"[LUNAR] LOST Packet ID={packet.packet_id}, Data={packet.data:.2f}")
+            print(f"[LUNAR] Packet ID={packet.packet_id} *LOST*")
     except socket.error as e:
         print(f"[ERROR] Failed to send packet: {e}")
 
@@ -39,14 +39,14 @@ def send_packet_with_ack(packet, address):
             with lock:
                 acknowledged_packets.add(ack_id)  # Store ACK
             if ack_id == packet.packet_id:
-                print(f"[LUNAR] ACK received for Packet ID={packet.packet_id}")
+                print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
                 return
         except socket.timeout:
             pass  # Continue waiting for ACK
 
     # retry?? if no ACK received -> check if needed
-    print(f"[LUNAR] No ACK for Packet ID={packet.packet_id}, resending...")
-    send_packet(packet, address)  # Resend if no ACK received
+    print(f"[LUNAR] ID={packet.packet_id} *NO ACK* ->resend\n")
+    send_packet_with_ack(packet, address)  # Resend if no ACK received
 
 
 def send_temperature(packet_id, address):
@@ -90,7 +90,7 @@ def send_data():
 
 
 if __name__ == "__main__":
-    print("Hello world!")
+    print("Lunar initialising...\n\n")
     send_data()
 
 
