@@ -1,7 +1,7 @@
 LUNAR_IP = "0.0.0.0"  # Laptop A
-EARTH_IP = "172.20.10.2"  # Laptop B
+EARTH_IP = "172.20.10.6"  # Laptop B
 LUNAR_PORT = 5001
-EARTH_PORT = 5002
+EARTH_PORT = 5102
 
 # Channel factors
 MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay

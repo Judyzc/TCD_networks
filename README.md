@@ -16,6 +16,9 @@
 - moving constants into ```env_variables.py```
 - next to-do: security (bonus), create a rover object (status, direction, movement), UDP for video?, probably can't get parsing of data from others but could get scanning for connection
 
+29/3/2025: Version 2.1
+- Added lunar rover sending temperature and system status data 
+
 29/3/2025: Version 2.2 
 - To-do: 
     * Add control processes from Earth
