@@ -103,6 +103,7 @@ def send_data():
 
 
 if __name__ == "__main__":
+    print("Hello world!")
     send_data()
 
 

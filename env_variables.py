@@ -1,5 +1,5 @@
-LUNAR_IP = "x.x.x.x"  # Laptop A
-EARTH_IP = "x.x.x.x"  # Laptop B
+LUNAR_IP = "0.0.0.0"  # Laptop A
+EARTH_IP = "172.20.10.2"  # Laptop B
 LUNAR_PORT = 5001
 EARTH_PORT = 5002
 

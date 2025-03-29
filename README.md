@@ -22,5 +22,4 @@
     * Move processes (temp, status) into different ports
     * Add general scanning for connections -> 4th communication type? 
     * Email advisor (w/ updates and any questions)
-    * 
 
