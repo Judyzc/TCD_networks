@@ -8,6 +8,7 @@ MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay
 LATENCY_JITTER_FACTOR = 0.1 # Variation in travel time 
 PACKET_LOSS_PROBABILITY = 0.05
 PACKET_LOSS_FACTOR = 0.1
+BER = 0.001
 
 
 BANDWIDTH_LIMIT = 1024  # Bytes/second (simulating limited bandwidth)
