@@ -7,7 +7,7 @@ import time
 SATELLITE_LISTEN_IP = "0.0.0.0"  # Listen on all interfaces
 SATELLITE_PORT = 5005            # Port to listen on for Earth connections
 
-MOON_IP = "172.20.10.3"          # IP address of the Moon server (update this)
+MOON_IP = "XXX.XX.XX.X"          # IP address of the Moon server (update this)
 MOON_PORT = 5005                 # Port of the Moon server
 
 BUFFER_SIZE = 1024               # Buffer size for receiving data

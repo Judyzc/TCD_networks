@@ -1,10 +1,10 @@
 # TCP CLIENT 
 import socket
 
-TCP_IP = "172.20.10.2"  # Replace with the server's network IP address
+TCP_IP = "XXX.XX.XX.X"  # Replace with the server's network IP address
 TCP_PORT = 5005       # Must match the server's port
 BUFFER_SIZE = 1024    # Buffer size for receiving data
-MESSAGE = "Hello this is Brandon!!!"
+MESSAGE = "Hello this is XXXXX!!!"
 
 # Create a TCP socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
