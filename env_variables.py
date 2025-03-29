@@ -3,6 +3,11 @@ EARTH_IP = "x.x.x.x"  # Laptop B
 LUNAR_PORT = 5001
 EARTH_PORT = 5002
 
+#Satellite (Laptop C)
+SATELLITE_IP = "x.x.x.x"  # Satellite relay IP
+SATELLITE_PORT = 5003      # Satellite listening port
+MOON_TO_SATELLITE_TO_EARTH_LATENCY = 2.56 #seconds, one way
+
 # Channel factors
 MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay
 LATENCY_JITTER_FACTOR = 0.1 # Variation in travel time 

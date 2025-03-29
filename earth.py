@@ -9,13 +9,16 @@ def receive_packet():
         s.bind((EARTH_IP, EARTH_PORT))  # Bind to Earth IP
         s.listen(1)  # Listen for 1 connection (TCP)
         print("[EARTH] Waiting for connection...")
-        conn, addr = s.accept() 
-        with conn:
-            print(f"[EARTH] Connection established with {addr}")
-            while True:
-                data = conn.recv(1024)
-                if not data:
-                    break
+
+        try:
+            conn, addr = s.accept() 
+            with conn:
+                print(f"[EARTH] Connection established with {addr}")
+                while True:
+                    data = conn.recv(1024)
+        except socket.error as e:
+                print(f"[EARTH] Connection with {e} failed")
+                print("[EARTH] Connecting to intermediate satellite...")
 
                 packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
                 print(f"[EARTH] Received -> ID: {packet_id}, Type: {packet_type}, Data: {data:.2f}, Timestamp: {timestamp}")
