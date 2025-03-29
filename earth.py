@@ -4,6 +4,8 @@ from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
+received_packets = set()
+
 def send_ack(packet_id, address):
     """Return ACK for Lunar Packet to Moon w/ random loss."""
 
@@ -51,14 +53,20 @@ def receive_packet():
 
             timestamp_str = decode_timestamp(timestamp)
 
-            if packet_type == 0:  # Temperature
-                print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
+            # check if the packet has already been received -> previous ACK was lost
+            if packet_id not in received_packets:
+                received_packets.add(packet_id) #update the received packets
 
-            elif packet_type == 1:  # System status
-                battery, sys_temp = parse_system_status(data_value)
-                print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
+                if packet_type == 0:  # Temperature
+                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
 
-            send_ack(packet_id, address)  # Send ACK back to sender
+                elif packet_type == 1:  # System status
+                    battery, sys_temp = parse_system_status(data_value)
+                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
+            else: 
+                print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
+            # Send ACK back to sender regardless of wether it was already received or not
+            send_ack(packet_id, address)  
         except Exception as e:
             print(f"[ERROR] Failed to receive packet: {e}")
 

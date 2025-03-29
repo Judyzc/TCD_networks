@@ -81,9 +81,9 @@ def send_data():
         temp_packet_id += 1
         status_packet_id += 1
 
-        if temp_packet_id > 65535:
+        if temp_packet_id > 1000:
             temp_packet_id = 0
-        if status_packet_id > 66535:  # Keep a gap 
+        if status_packet_id > 2000:  # Keep a gap 
             status_packet_id = 1000
 
         time.sleep(20)
