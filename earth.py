@@ -22,6 +22,9 @@ def parse_system_status(data):
     sys_temp = (data - battery) * 1000 - 40  # Extract decimal part and shift back
     return battery, sys_temp
 
+def decode_timestamp(timestamp):
+    """Convert Unix timestamp to human-readable format."""
+    return time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(timestamp))
 
 def receive_packet():
     """Receive Lunar Packets from Moon through TCP with a persistent connection."""
@@ -39,13 +42,14 @@ def receive_packet():
                     if not data:
                         break  # Exit inner loop if connection is closed
                     packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
+                    timestamp_str = decode_timestamp(timestamp)
 
                     if packet_type == 0:  # Temperature, data is temp
-                        print(f"Received Temperature: {data}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
+                        print(f"Received Temperature: {data:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
 
                     elif packet_type == 1:  # System status
                         battery, sys_temp = parse_system_status(data)
-                        print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
+                        print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
 
                     # print(f"[EARTH] Received -> ID: {packet_id}, Type: {packet_type}, Data: {data:.2f}, Timestamp: {timestamp}")
                     send_ack(packet_id, conn)  # Send ACK for received packet
