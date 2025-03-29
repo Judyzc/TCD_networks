@@ -6,7 +6,7 @@ class LunarPacket:
     def __init__(self, packet_id, packet_type, data):
         # 2 Bytes
         self.packet_id = packet_id 
-        # 1 Byte: 0 for Data, 1 for ACK
+        # 1 Byte: 0 for temp, 1 for system, 2 for commands from Earth
         self.packet_type = packet_type  
         # 4 Bytes: actual data being sent (temperature, control, status, etc.)
         self.data = float(data)
