@@ -86,7 +86,7 @@ def send_data():
         if status_packet_id > 66535:  # Keep a gap 
             status_packet_id = 1000
 
-        time.sleep(60)
+        time.sleep(20)
 
 
 if __name__ == "__main__":

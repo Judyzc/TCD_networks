@@ -44,7 +44,11 @@ def receive_packet():
             data, address = UDP_SOCKET.recvfrom(1024) 
             parsed_packet = LunarPacket.parse(data) # MIGHT BE NONE -> with checksum
 
-            # Extract fields from the parsed dictionary
+            if parsed_packet is None:
+                print("[ERROR] Checksum, invalid packet received, skipping...")
+                continue  # Checksum error, skip to next iteration
+
+            # Could throw error here 
             packet_id = parsed_packet["packet_id"]
             packet_type = parsed_packet["packet_type"]
             data_value = parsed_packet["data"]

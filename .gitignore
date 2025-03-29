@@ -1,2 +1,3 @@
 # ./randompractice
 *.pyc
+__pycache__
