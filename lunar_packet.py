@@ -1,5 +1,7 @@
 import struct
 import time
+from utils import setup_logger, log_message
+filepath = setup_logger("lunar_packet")
 
 class LunarPacket:
     """Class for constructing and parsing packets."""
@@ -65,6 +67,7 @@ class LunarPacket:
         calculated_checksum = sum(packet_data) % 65536
         if calculated_checksum != checksum:
             print(f"[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
+            log_message(filepath, f"[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
             return None  # Return None -> exceptoin will be raised in earth.py
 
         return {

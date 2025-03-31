@@ -5,12 +5,14 @@ import threading
 from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
+from scanner import scan_ips
 
 # UDP instead of TCP 
 UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 UDP_SOCKET.settimeout(1) # timeout for ACK
 acknowledged_packets = set() 
 lock = threading.Lock()
+
 
 def send_packet(packet, address):
     """Send a LunarPacket using UDP."""
@@ -77,7 +79,8 @@ def send_data():
     """Continuously send temperature and system status packets."""
     temp_packet_id = 0
     status_packet_id = 1000
-    address = (EARTH_IP, EARTH_PORT)
+
+    address = (EARTH_IP, EARTH_PORT) # just take first 
 
     while True:
         send_temperature(temp_packet_id, address)

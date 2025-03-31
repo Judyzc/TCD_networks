@@ -4,6 +4,10 @@ import socket
 import random
 from env_variables import MOON_TO_EARTH_LATENCY, LATENCY_JITTER_FACTOR, PACKET_LOSS_PROBABILITY, PACKET_LOSS_FACTOR, BER
 
+from utils import setup_logger, log_message
+filepath = setup_logger("channel_simulation") # just for writing into a file
+
+
 def corrupt_data(data, BER):
     """Simlutaes bitwise data corruption in channel"""
     if not data:
