@@ -32,7 +32,6 @@ def parse_system_status(data):
 
 def decode_timestamp(timestamp):
     """Convert Unix timestamp to human-readable format."""
-
     return time.strftime('%Y-%m-%d %H:%M:%S GMT', time.gmtime(timestamp))
 
 
@@ -109,18 +108,18 @@ def receive_packet():
             print(f"[ERROR] Telemetry error: {e}")
 
 
-def telemetry_server():
-    try:
-        # UDP socket
-        UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        UDP_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_PORT))
-        receive_packet()
-    except Exception as e:
-        print(f"[EARTH ERROR] {e} ")
-    finally:
-        if 'UDP_SOCKET' in locals() and UDP_SOCKET:
-            UDP_SOCKET.close()
-        print("[EARTH] Socket closed and program exited")
+# def telemetry_server():
+#     try:
+#         # UDP socket
+#         UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         UDP_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_PORT))
+#         receive_packet()
+#     except Exception as e:
+#         print(f"[EARTH ERROR] {e} ")
+#     finally:
+#         if 'UDP_SOCKET' in locals() and UDP_SOCKET:
+#             UDP_SOCKET.close()
+#         print("[EARTH] Socket closed and program exited")
 
 
 def command_client():
@@ -158,7 +157,7 @@ if __name__ == "__main__":
     """)
     
     # Start telemetry server in separate thread
-    telemetry_thread = threading.Thread(target=telemetry_server, daemon=True)
+    telemetry_thread = threading.Thread(target=receive_packet, daemon=True)
     telemetry_thread.start()
     
     # Run command client in main thread
