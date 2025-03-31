@@ -6,7 +6,7 @@ import channel_simulation as channel
 
 class MEUP_server:
 
-    def __init__(self, ip="0.0.0.0", port=0):
+    def __init__(self, ip="127.0.0.1", port=5001):
         """Init receiver with IP address and PORT"""
         self.ip = ip
         self.port = port
@@ -19,6 +19,7 @@ class MEUP_server:
             self.UDP_SOCKET.bind((self.ip, self.port))
         except Exception as e:
             print(f"[EARTH ERROR] {e} ")
+            raise
 
 
     def send_ack(self, packet_id, address):
