@@ -21,8 +21,8 @@ def send_ack(packet_id, address):
 def parse_system_status(data):
     """Extract battery and system temperature from a LunarPacket."""
 
-    battery = int(data)  # Extract integer part as battery
-    sys_temp = (data - battery) * 1000 - 40  # Extract decimal part and shift back
+    battery = int(data) 
+    sys_temp = (data - battery) * 1000 - 40
     return battery, sys_temp
 
 
@@ -39,27 +39,22 @@ def receive_packet():
     while True:
         try: 
             data, address = UDP_SOCKET.recvfrom(1024) 
-            parsed_packet = LunarPacket.parse(data) # MIGHT BE NONE -> with checksum
-
-            if parsed_packet is None:
+            parsed_packet = LunarPacket.parse(data) 
+            if parsed_packet is None: # None if checksum failed in LunarPacket
                 print("[EARTH] ID={packet_id} *CHECKSUM INVALID* -> skipping")
-                continue  # Checksum error, skip to next iteration
+                continue  # skip to next
 
-            # Could throw error here 
             packet_id = parsed_packet["packet_id"]
             packet_type = parsed_packet["packet_type"]
             data_value = parsed_packet["data"]
             timestamp = parsed_packet["timestamp"]
-
             timestamp_str = decode_timestamp(timestamp)
 
             # check if the packet has already been received -> previous ACK was lost
             if packet_id not in received_packets:
                 received_packets.add(packet_id) #update the received packets
-
                 if packet_type == 0:  # Temperature
                     print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
-
                 elif packet_type == 1:  # System status
                     battery, sys_temp = parse_system_status(data_value)
                     print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")

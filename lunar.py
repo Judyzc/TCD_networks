@@ -9,9 +9,8 @@ import channel_simulation as channel
 # UDP instead of TCP 
 UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 UDP_SOCKET.settimeout(1) # timeout for ACK
-acknowledged_packets = set() # threading for ACKs to not get hangups
+acknowledged_packets = set() 
 lock = threading.Lock()
-
 
 def send_packet(packet, address):
     """Send a LunarPacket using UDP."""
