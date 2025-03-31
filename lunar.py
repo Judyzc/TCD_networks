@@ -1,26 +1,27 @@
-from rover_control import execute_movement
 import socket
 import time
 import random
 import threading
+from rover_control import execute_movement
 from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
-# UDP sockets instead of using TCP 
+# UDP sockets for different purposes
 TELEMETRY_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 COMMAND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-TELEMETRY_SOCKET.settimeout(1)
 COMMAND_SOCKET.bind((LUNAR_IP, LUNAR_RECEIVE_PORT))
+TELEMETRY_SOCKET.settimeout(1)
 
-acknowledged_packets = set() # threading for ACKs to not get hangups
+# Thread-safe structures
+acknowledged_packets = set()
 lock = threading.Lock()
 
 def send_packet(packet, address):
     """Send a LunarPacket using UDP."""
     try:
         packet_data = packet.build()
-        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address, packet.packet_id)
+        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address)
         if not_lost:
             print(f"[LUNAR] ID={packet.packet_id} *SENT*")
         else:
@@ -54,10 +55,8 @@ def send_temperature(packet_id, address):
     """Send temperature data packet."""
     temp_data = round(random.uniform(-150, 130), 2)
     packet = LunarPacket(
-        src_port=LUNAR_SEND_PORT,
-        dest_port=EARTH_RECEIVE_PORT,
         packet_id=packet_id,
-        packet_type=0,
+        packet_type=0,  # 0 = temperature
         data=temp_data
     )
     send_packet_with_ack(packet, address)
@@ -68,10 +67,8 @@ def send_system_status(packet_id, address):
     sys_temp = round(random.uniform(-40, 80), 2)
     status_data = battery + (sys_temp / 1000)
     packet = LunarPacket(
-        src_port=LUNAR_SEND_PORT,
-        dest_port=EARTH_RECEIVE_PORT,
         packet_id=packet_id,
-        packet_type=1,
+        packet_type=1,  # 1 = status
         data=status_data
     )
     send_packet_with_ack(packet, address)
@@ -103,16 +100,19 @@ def command_server():
             cmd = data.decode().strip()
             print(f"[MOON] Received command: {cmd}")
             execute_movement(cmd)
-            
-            # Send ACK back to Earth's command port
-            COMMAND_SOCKET.sendto(b"ACK", (EARTH_IP, EARTH_COMMAND_PORT))
-            
+
+            # Send ACK back to Earth
+            ack_message = f"ACK-{cmd}".encode()
+            COMMAND_SOCKET.sendto(ack_message, (EARTH_IP, EARTH_COMMAND_PORT))
+            print(f"[MOON] ACK Sent for {cmd}")
+
         except Exception as e:
             print(f"[MOON] Command error: {e}")
 
+
 if __name__ == "__main__":
-    print("""Lunar Rover System Initialised
-    Data OUT: {LUNAR_SEND_PORT} → {EARTH_RECEIVE_PORT}
+    print(f"""Lunar Rover System Initialized
+    Telemetry OUT: {LUNAR_SEND_PORT} → {EARTH_RECEIVE_PORT}
     Commands IN: {EARTH_COMMAND_PORT} → {LUNAR_RECEIVE_PORT}
     """)
     

@@ -1,7 +1,7 @@
 LUNAR_IP = "172.20.10.2"  # Laptop A
 EARTH_IP = "172.20.10.2"  # Laptop B
-EARTH_RECEIVE_PORT = 5001    # Receives telemetry (temperature, status)
-EARTH_COMMAND_PORT = 5002    # Sends movement commands to Lunar Rover
+EARTH_RECEIVE_PORT = 5005    # Receives telemetry (temperature, status)
+EARTH_COMMAND_PORT = 5006    # Sends movement commands to Lunar Rover
 
 LUNAR_RECEIVE_PORT = 5003   # Receives movement commands from Earth
 LUNAR_SEND_PORT = 5004       # Sends telemetry data back to Earth
