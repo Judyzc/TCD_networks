@@ -122,8 +122,8 @@ class MEUP_server:
                 self.execute_movement(cmd)
 
                 # Send ACK back to Earth
-                ack_message = f"ACK-{cmd}".encode()
-                self.UDP_SOCKET.sendto(ack_message, (self.ip, self.port))
+                ack_message = f"ACK {cmd}".encode()
+                self.UDP_SOCKET.sendto(ack_message, (addr[0], addr[1]))
                 print(f"[MOON] ACK Sent for {cmd}")
 
             except Exception as e:
