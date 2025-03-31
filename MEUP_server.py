@@ -108,3 +108,45 @@ class MEUP_server:
         finally:
             self.close()
 
+    def command_server(self):
+        """Handle incoming commands via UDP."""
+        print(f"[MOON] Command server ready on UDP port {self.port}")
+        while True:
+            try:
+                data, addr = self.UDP_SOCKET.recvfrom(1024)
+                if addr[0] != EARTH_IP:
+                    continue
+                    
+                cmd = data.decode().strip()
+                print(f"[MOON] Received command: {cmd}")
+                self.execute_movement(cmd)
+
+                # Send ACK back to Earth
+                ack_message = f"ACK-{cmd}".encode()
+                self.UDP_SOCKET.sendto(ack_message, (self.ip, self.port))
+                print(f"[MOON] ACK Sent for {cmd}")
+
+            except Exception as e:
+                print(f"[MOON] Command error: {e}")
+
+    def execute_movement(self, command):
+        """Simulate executing movement commands."""
+        print(f"[ROVER] Executing Command: {command}")
+
+        if command == "FORWARD":
+            print("[ROVER] Moving forward...")
+            time.sleep(2)
+        elif command == "BACK":
+            print("[ROVER] Moving backward...")
+            time.sleep(2)
+        elif command == "LEFT":
+            print("[ROVER] Turning left...")
+            time.sleep(1)
+        elif command == "RIGHT":
+            print("[ROVER] Turning right...")
+            time.sleep(1)
+        elif command == "STOP":
+            print("[ROVER] Stopping...")
+        else:
+            print(f"[ROVER] Unknown Command: {command}")
+
