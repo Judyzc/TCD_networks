@@ -22,7 +22,7 @@ def send_packet(packet, address):
     """Send a LunarPacket using UDP."""
     try:
         packet_data = packet.build()
-        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address, packet.packed_id)
+        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address, packet.packet_id)
         if not_lost:
             print(f"[LUNAR] ID={packet.packet_id} *SENT*")
         else:
@@ -54,14 +54,6 @@ def send_packet_with_ack(packet, address):
 
 def send_temperature(packet_id, address):
     """Send temperature data packet."""
-    temp_data = round(random.uniform(-150, 130), 2)
-    packet = LunarPacket(
-        packet_id=packet_id,
-        packet_type=0,  # 0 = temperature
-        data=temp_data
-    )
-    send_packet_with_ack(packet, address)
-
     temp_data = round(random.uniform(-150, 130), 2)  # in Celsius
     packet = LunarPacket(src_port=LUNAR_SEND_PORT, dest_port=EARTH_RECEIVE_PORT, 
                          packet_id=packet_id, packet_type=0, data=temp_data)
