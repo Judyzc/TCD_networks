@@ -1,8 +1,10 @@
-LUNAR_IP = "0.0.0.0"  # Laptop A
-EARTH_IP = "0.0.0.0"  # Laptop B
-POSSIBLE_EARTH_IPS = ["172.20.10.2", "172.20.10.5", "172.20.10.6"]
-LUNAR_PORT = 5001
-EARTH_PORT = 5101
+LUNAR_IP = "172.20.10.2"  # Laptop A
+EARTH_IP = "172.20.10.2"  # Laptop B
+EARTH_RECEIVE_PORT = 5005    # Receives telemetry (temperature, status)
+EARTH_COMMAND_PORT = 5006    # Sends movement commands to Lunar Rover
+
+LUNAR_RECEIVE_PORT = 5003   # Receives movement commands from Earth
+LUNAR_SEND_PORT = 5004       # Sends telemetry data back to Earth
 
 # Channel factors
 MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay
@@ -14,5 +16,5 @@ BER = 0.3
 BANDWIDTH_LIMIT = 1024  # Bytes/second (simulating limited bandwidth)
 PACKET_SIZE_LIMIT = 256  # Max payload size in bytes
 
-# Protocol
+# if UDP
 MAX_RETRIES = 3 
