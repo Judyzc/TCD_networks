@@ -18,7 +18,7 @@ class MEUP_server:
             self.UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.UDP_SOCKET.bind((self.ip, self.port))
         except Exception as e:
-            print(f"[EARTH ERROR] {e} ")
+            print(f"[SERVER ERROR] {e} ")
             raise
 
 
@@ -29,9 +29,9 @@ class MEUP_server:
         not_dropped = channel.send_w_delay_loss(self.UDP_SOCKET, ack_message, address, packet_id)  
         # actual sending is done in the channel_send_w_dalay_loss function
         if not_dropped:
-            print(f"[EARTH] ID={packet_id} *ACK Sent*")
+            print(f"[SERVER] ID={packet_id} *ACK Sent*")
         else: 
-            print(f"[EARTH] ID={packet_id} *ACK LOST*")
+            print(f"[SERVER] ID={packet_id} *ACK LOST*")
 
 
     def parse_system_status(self, data):
@@ -50,11 +50,11 @@ class MEUP_server:
     def receive_packet(self):
         """Receive Lunar Packets from Moon through TCP with a persistent connection."""
         
-        print("[EARTH] Listening for incoming UDP packets...\n\n")
+        print("[SERVER] Listening for incoming UDP packets...\n\n")
         while True:
 
             if not self.UDP_SOCKET:
-                print("[EARTH ERROR] Socket not initialised")
+                print("[SERVER ERROR] Socket not initialised")
                 return
 
             try: 
@@ -62,7 +62,7 @@ class MEUP_server:
                 parsed_packet = LunarPacket.parse(data) # MIGHT BE NONE -> with checksum
 
                 if parsed_packet is None:
-                    print("[EARTH] ID={packet_id} *CHECKSUM INVALID* -> skipping")
+                    print("[SERVER] ID={packet_id} *CHECKSUM INVALID* -> skipping")
                     continue  # Checksum error, skip to next iteration
 
                 # Could throw error here 
@@ -78,13 +78,13 @@ class MEUP_server:
                     self.received_packets.add(packet_id) #update the received packets
 
                     if packet_type == 0:  # Temperature
-                        print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
+                        print(f"\n[SERVER] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
 
                     elif packet_type == 1:  # System status
                         battery, sys_temp = self.parse_system_status(data_value)
-                        print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
+                        print(f"\n[SERVER] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
                 else: 
-                    print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
+                    print(f"\n[SERVER] ID={packet_id} *DUPLICATE* -> IGNORED")
                 # Send ACK back to sender regardless of wether it was already received or not
                 self.send_ack(packet_id, address)  
             except Exception as e:
@@ -98,13 +98,55 @@ class MEUP_server:
     def startListening(self):
         """Start receiving packets."""
         if not self.UDP_SOCKET:
-            print("[EARTH ERROR] Socket not initialized")
+            print("[SERVER ERROR] Socket not initialized")
             return
             
         try:
             self.receive_packet()
         except Exception as e:
-            print(f"[EARTH ERROR] {e}")
+            print(f"[SERVER ERROR] {e}")
         finally:
             self.close()
+
+    def command_server(self):
+        """Handle incoming commands via UDP."""
+        print(f"[MOON] Command server ready on UDP port {self.port}")
+        while True:
+            try:
+                data, addr = self.UDP_SOCKET.recvfrom(1024)
+                if addr[0] != EARTH_IP:
+                    continue
+                    
+                cmd = data.decode().strip()
+                print(f"[MOON] Received command: {cmd}")
+                self.execute_movement(cmd)
+
+                # Send ACK back to Earth
+                ack_message = f"ACK {cmd}".encode()
+                self.UDP_SOCKET.sendto(ack_message, (addr[0], addr[1]))
+                print(f"[MOON] ACK Sent for {cmd}")
+
+            except Exception as e:
+                print(f"[MOON] Command error: {e}")
+
+    def execute_movement(self, command):
+        """Simulate executing movement commands."""
+        print(f"[ROVER] Executing Command: {command}")
+
+        if command == "FORWARD":
+            print("[ROVER] Moving forward...")
+            time.sleep(2)
+        elif command == "BACK":
+            print("[ROVER] Moving backward...")
+            time.sleep(2)
+        elif command == "LEFT":
+            print("[ROVER] Turning left...")
+            time.sleep(1)
+        elif command == "RIGHT":
+            print("[ROVER] Turning right...")
+            time.sleep(1)
+        elif command == "STOP":
+            print("[ROVER] Stopping...")
+        else:
+            print(f"[ROVER] Unknown Command: {command}")
 
