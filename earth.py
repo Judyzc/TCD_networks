@@ -4,7 +4,13 @@ from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
+
+#go-back-N protocol variables
 received_packets = set()
+expected_temp_seq_num = 0     #temperature packets (0-999)
+expected_status_seq_num = 1000  # status packets (1000-1999)
+last_ack_temp = -1            # Last acknowledged temperature packet
+last_ack_status = 999         # Last acknowledged status packet
 
 def send_ack(packet_id, address):
     """Return ACK for Lunar Packet to Moon w/ random loss."""
@@ -36,6 +42,8 @@ def receive_packet():
     """Receive Lunar Packets from Moon through TCP with a persistent connection."""
     
     print("[EARTH] Listening for incoming UDP packets...\n\n")
+    global expected_temp_seq_num, expected_status_seq_num, last_ack_temp, last_ack_status
+
     while True:
         try: 
             data, address = UDP_SOCKET.recvfrom(1024) 
@@ -53,20 +61,51 @@ def receive_packet():
 
             timestamp_str = decode_timestamp(timestamp)
 
-            # check if the packet has already been received -> previous ACK was lost
-            if packet_id not in received_packets:
-                received_packets.add(packet_id) #update the received packets
+            #check if arrived in sequence
+            in_seq = False
+            if packet_type == 0: # Temperature
+                if packet_id == expected_temp_seq_num:
+                    in_seq = True
+                    last_ack_temp = packet_id
+                    expected_temp_seq_num = (expected_temp_seq_num + 1)%1000 #modulo 1000 as it wraps around at 1000
+            elif packet_type == 1: # System
+                if packet_id == expected_status_seq_num:
+                    in_seq = True
+                    last_ack_status = packet_id
+                    expected_status_seq_num = 1000  + (expected_status_seq_num - 1000 + 1)%1000 #wraps at 2000
 
-                if packet_type == 0:  # Temperature
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
+            if in_seq:#if packet arrived in sequence
 
-                elif packet_type == 1:  # System status
-                    battery, sys_temp = parse_system_status(data_value)
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
-            else: 
-                print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
-            # Send ACK back to sender regardless of wether it was already received or not
-            send_ack(packet_id, address)  
+                # check if the packet has already been received -> previous ACK was lost
+                if packet_id not in received_packets:
+                    received_packets.add(packet_id) #update the received packets
+
+                    if packet_type == 0:  # Temperature
+                        print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
+
+                    elif packet_type == 1:  # System status
+                        battery, sys_temp = parse_system_status(data_value)
+                        print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
+                else: 
+                    print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
+                # Send ACK back to sender regardless of wether it was already received or not
+                send_ack(packet_id, address)  
+            
+            else: #case where not in sequence -> go-back-N
+                print(f"\n[EARTH] ID={packet_id} *OUT OF SEQUENCE* -> DISCARDED")
+
+                if packet_type == 0:
+                    if last_ack_temp >= 0: # check for validity i.e. have passed the starting position
+                        send_ack(last_ack_temp, address)
+                        print(f"[EARTH] ID={packet_id} *GBN_T* last={last_ack_temp} ")
+                elif packet_type == 1:
+                    if last_ack_status >= 1000:
+                        send_ack(last_ack_status, address)
+                        print(f"[EARTH] ID={packet_id} *GBN_S* last={last_ack_status} ")
+
+            if len(received_packets) >= 2000:
+                received_packets.clear()
+
         except Exception as e:
             print(f"[ERROR] Failed to receive packet: {e}")
 
