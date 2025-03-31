@@ -7,7 +7,7 @@ def execute_movement(command):
     if command == "FORWARD":
         print("[ROVER] Moving forward...")
         time.sleep(2)
-    elif command == "BACKWARD":
+    elif command == "BACK":
         print("[ROVER] Moving backward...")
         time.sleep(2)
     elif command == "LEFT":
