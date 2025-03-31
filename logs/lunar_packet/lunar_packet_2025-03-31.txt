@@ -1,0 +1,2 @@
+14:32:21: [ERROR] Checksum mismatch! Expected: 1709, Got: 1697
+14:32:27: [ERROR] Checksum mismatch! Expected: 1913, Got: 1699
