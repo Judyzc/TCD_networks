@@ -22,9 +22,9 @@ class MEUP_client:
             self.UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.UDP_SOCKET.bind((self.lunar_ip, self.lunar_port))
             self.UDP_SOCKET.settimeout(1)  # Set timeout for ACK reception
-            print(f"[LUNAR] Socket initialized on {self.lunar_ip}:{self.lunar_port}")
+            print(f"[CLIENT] Socket initialized on {self.lunar_ip}:{self.lunar_port}")
         except Exception as e:
-            print(f"[LUNAR ERROR] Socket initialization failed: {e}")
+            print(f"[CLIENT ERROR] Socket initialization failed: {e}")
             self.close()
             raise
             
@@ -36,9 +36,9 @@ class MEUP_client:
             packet_data = packet.build()
             not_lost = channel.send_w_delay_loss(self.UDP_SOCKET, packet_data, address, packet.packet_id)
             if not_lost:
-                print(f"[LUNAR] ID={packet.packet_id} *SENT*")
+                print(f"[CLIENT] ID={packet.packet_id} *SENT*")
             else:
-                print(f"[LUNAR] Packet ID={packet.packet_id} *LOST*")
+                print(f"[CLIENT] Packet ID={packet.packet_id} *LOST*")
         except socket.error as e:
             print(f"[ERROR] Failed to send packet: {e}")
 
@@ -56,17 +56,17 @@ class MEUP_client:
                     with self.lock:
                         self.acknowledged_packets.add(ack_id)  # Store ACK
                     if ack_id == packet.packet_id:
-                        print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
+                        print(f"[CLIENT] ID={packet.packet_id} *ACK RECVD*\n")
                         return
                 except (UnicodeDecodeError, ValueError) as e:
                     #handle receipt of corrupted ACKs, if resend and try to get ACK
-                    print(f"[LUNAR] ID={packet.packet_id} *CORRUPTED ACK RECVD*")
+                    print(f"[CLIENT] ID={packet.packet_id} *CORRUPTED ACK RECVD*")
 
             except socket.timeout:
                 pass  # Continue waiting for ACK
 
         # retry?? if no ACK received -> check if needed
-        print(f"[LUNAR] ID={packet.packet_id} *NO ACK* ->resend\n")
+        print(f"[CLIENT] ID={packet.packet_id} *NO ACK* ->resend\n")
         self.send_packet_with_ack(packet, address)  # Resend if no ACK received
 
 
@@ -108,10 +108,37 @@ class MEUP_client:
                 status_packet_id = 1000
 
             time.sleep(20)
+
+    def command_client(self):
+        """Send commands to Moon via UDP."""
+        time.sleep(2)  # Wait for Moon to initialize
+        print(f"[EARTH] Command client ready to send to {self.earth_ip}:{self.earth_port}")
+
+        while True:
+            cmd = input("Command (FWD/BACK/LEFT/RIGHT/STOP): ").upper()
+            if cmd in ["FWD", "BACK", "LEFT", "RIGHT", "STOP"]:
+                try:
+                    self.UDP_SOCKET.sendto(cmd.encode(), (self.earth_ip, self.earth_port))
+                    print(f"[EARTH] Sent {cmd}")
+
+                    # Wait for ACK
+                    self.UDP_SOCKET.settimeout(2)
+                    try:
+                        ack_data, _ = self.UDP_SOCKET.recvfrom(1024)
+                        ack_message = ack_data.decode()
+                        if ack_message.startswith("ACK"):
+                            print(f"[ACK] Received: {ack_message}")
+                        else:
+                            print(f"[ERROR] Unexpected ACK format: {ack_message}")
+
+                    except socket.timeout:
+                        print("[EARTH] No ACK received - command may have been lost")
+                except Exception as e:
+                    print(f"[ERROR] Command failed: {e}")
     
     def close(self):
         """Close the socket connection."""
         if self.UDP_SOCKET:
             self.UDP_SOCKET.close()
             self.UDP_SOCKET = None
-            print("[LUNAR] Socket closed")
+            print("[CLIENT] Socket closed")

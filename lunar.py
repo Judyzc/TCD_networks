@@ -10,8 +10,9 @@ from MEUP_client import MEUP_client
 if __name__ == "__main__":
     try:
         # UDP socket
-        LunarClient = MEUP_client(LUNAR_IP, LUNAR_PORT, EARTH_IP, EARTH_PORT)
-        LunarClient.send_data()
+        SendTelemetry = MEUP_client(LUNAR_IP, LUNAR_SEND_PORT, EARTH_IP, EARTH_RECEIVE_PORT)
+        ReceiveCommands = 
+        
     except Exception as e:
         print(f"[LUNAR ERROR] {e} ")
     finally:

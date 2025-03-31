@@ -1,19 +1,56 @@
 import socket
 import time
+import threading
 from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 from MEUP_server import MEUP_server
+from MEUP_client import MEUP_client
 
+
+def telemetry_thread(server):
+    """Thread function for running the telemetry server."""
+    try:
+        server.startListening()
+    except Exception as e:
+        print(f"[TELEMETRY THREAD ERROR] {e}")
+
+
+def command_thread(client):
+    """Thread function for running the command client."""
+    
+    try:
+        client.command_client()
+    except Exception as e:
+        print(f"[COMMAND THREAD ERROR] {e}")
 
 if __name__ == "__main__":
+    threads = []
+    Telemetry = None
+    Commands = None
     try:
         # UDP socket
-        EarthServer = MEUP_server(EARTH_IP, EARTH_PORT)
-        EarthServer.startListening()
+        Telemetry = MEUP_server(EARTH_IP, EARTH_RECEIVE_PORT)
+        Commands = MEUP_client(EARTH_IP, EARTH_COMMAND_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
+
+        t_thread = threading.Thread(target=telemetry_thread, args=(Telemetry,), daemon=True)
+        t_thread.start()
+        threads.append(t_thread)
+        print("[EARTH] Telemetry thread started")
+        
+        # Create and start the command thread
+        c_thread = threading.Thread(target=command_thread, args=(Commands,), daemon=True)
+        c_thread.start()
+        threads.append(c_thread)
+        print("[EARTH] Command thread started")
+        
+        # Keep the main thread alive to allow both threads to run
+        while True:
+            time.sleep(0.1)
+
     except Exception as e:
         print(f"[EARTH ERROR] {e} ")
-    finally:
-        if EarthServer:
-            EarthServer.close()
-        print("[EARTH] Socket closed and program exited")
+
+   
+
+
