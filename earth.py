@@ -1,4 +1,3 @@
-# earth.py (UDP Version)
 import socket
 import threading
 import time
@@ -6,18 +5,21 @@ from env_variables import *
 import channel_simulation as channel
 from lunar_packet import LunarPacket
 
-# UDP Sockets
-TELEMETRY_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# UDP Sockets for receiving data and sending commands
+UPDATES_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+SENSOR_DATA_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 COMMAND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-TELEMETRY_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_PORT))
+
+UPDATES_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_UPDATES_PORT))
+SENSOR_DATA_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_SENSOR_DATA_PORT))
 COMMAND_SOCKET.bind((EARTH_IP, EARTH_COMMAND_PORT))
 
 received_packets = set()
 
-def send_ack(packet_id, address):
+def send_ack(socket, packet_id, address):
     """Send ACK for received packet."""
     ack_message = str(packet_id).encode()
-    not_dropped = channel.send_w_delay_loss(TELEMETRY_SOCKET, ack_message, address)
+    not_dropped = channel.send_w_delay_loss(socket, ack_message, address)
     if not_dropped:
         print(f"[EARTH] ID={packet_id} *ACK Sent*")
     else:
@@ -33,16 +35,18 @@ def decode_timestamp(timestamp):
     """Convert Unix timestamp to readable format."""
     return time.strftime('%Y-%m-%d %H:%M:%S GMT', time.gmtime(timestamp))
 
-def receive_packet():
+def telemetry_server(socket, data_type):
     """Handle incoming telemetry from Moon."""
-    print(f"[EARTH] Telemetry server ready on UDP port {EARTH_RECEIVE_PORT}")
+    port = EARTH_RECEIVE_UPDATES_PORT if data_type == "UPDATES" else EARTH_RECEIVE_SENSOR_DATA_PORT
+    print(f"[EARTH] {data_type} Telemetry Server ready on UDP port {port}")
+
     while True:
         try:
-            data, address = TELEMETRY_SOCKET.recvfrom(1024)
+            data, address = socket.recvfrom(1024)
             parsed_packet = LunarPacket.parse(data)
 
             if not isinstance(parsed_packet, dict):
-                print("[EARTH] *CHECKSUM INVALID OR BAD DATA FORMAT* -> skipping")
+                print(f"[EARTH] *CHECKSUM INVALID OR BAD DATA FORMAT* -> skipping")
                 continue
 
             packet_id = parsed_packet.get("packet_id")
@@ -58,19 +62,16 @@ def receive_packet():
 
             if packet_id not in received_packets:
                 received_packets.add(packet_id)
-                if packet_type == 0:
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C, Timestamp: {timestamp_str}")
-                elif packet_type == 1:
+                if packet_type == 0:  # Temperature Data
+                    print(f"\n[EARTH] ID={packet_id} *RECVD SENSOR DATA* \nTemperature: {data_value:.2f}°C, Timestamp: {timestamp_str}")
+                elif packet_type == 1:  # System Status Updates
                     battery, sys_temp = parse_system_status(data_value)
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C, Timestamp: {timestamp_str}")
-            else:
-                print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
+                    print(f"\n[EARTH] ID={packet_id} *RECVD UPDATES* \nBattery: {battery}%, System Temp: {sys_temp:.2f}°C, Timestamp: {timestamp_str}")
 
-            send_ack(packet_id, address)
+            send_ack(socket, packet_id, address)
 
         except Exception as e:
             print(f"[ERROR] Telemetry error: {e}")
-
 
 def command_client():
     """Send commands to Moon via UDP."""
@@ -99,16 +100,14 @@ def command_client():
             except Exception as e:
                 print(f"[ERROR] Command failed: {e}")
 
-
 if __name__ == "__main__":
     print(f"""Earth Control System Initialized
-    Telemetry IN: {EARTH_RECEIVE_PORT}
+    Telemetry UPDATES IN: {EARTH_RECEIVE_UPDATES_PORT}
+    Telemetry SENSOR DATA IN: {EARTH_RECEIVE_SENSOR_DATA_PORT}
     Commands OUT: {EARTH_COMMAND_PORT} → {LUNAR_RECEIVE_PORT}
     """)
-    
-    # Start telemetry server in separate thread
-    telemetry_thread = threading.Thread(target=receive_packet, daemon=True)
-    telemetry_thread.start()
-    
-    # Run command client in main thread
+
+    threading.Thread(target=telemetry_server, args=(UPDATES_SOCKET, "UPDATES"), daemon=True).start()
+    threading.Thread(target=telemetry_server, args=(SENSOR_DATA_SOCKET, "SENSOR DATA"), daemon=True).start()
+
     command_client()

@@ -7,21 +7,18 @@ from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
-# UDP sockets for different purposes
-TELEMETRY_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# UDP Sockets for telemetry and commands
+UPDATES_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+SENSOR_DATA_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 COMMAND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 COMMAND_SOCKET.bind((LUNAR_IP, LUNAR_RECEIVE_PORT))
-TELEMETRY_SOCKET.settimeout(1)
 
-# Thread-safe structures
-acknowledged_packets = set()
-lock = threading.Lock()
-
-def send_packet(packet, address):
+def send_packet(packet, socket, address):
     """Send a LunarPacket using UDP."""
     try:
         packet_data = packet.build()
-        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address)
+        not_lost = channel.send_w_delay_loss(socket, packet_data, address)
         if not_lost:
             print(f"[LUNAR] ID={packet.packet_id} *SENT*")
         else:
@@ -29,37 +26,15 @@ def send_packet(packet, address):
     except socket.error as e:
         print(f"[ERROR] Failed to send packet: {e}")
 
-def send_packet_with_ack(packet, address):
-    """Send a packet and wait for an ACK."""
-    send_packet(packet, address)
-    start_time = time.time()
-    while time.time() - start_time < 5:
-        try:
-            ack_data, _ = TELEMETRY_SOCKET.recvfrom(1024)
-            try:
-                ack_id = int(ack_data.decode().strip())
-                with lock:
-                    acknowledged_packets.add(ack_id)
-                if ack_id == packet.packet_id:
-                    print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
-                    return
-            except (UnicodeDecodeError, ValueError):
-                print(f"[LUNAR] ID={packet.packet_id} *CORRUPTED ACK RECVD*")
-        except socket.timeout:
-            pass
-
-    print(f"[LUNAR] ID={packet.packet_id} *NO ACK* ->resend\n")
-    send_packet_with_ack(packet, address)
-
 def send_temperature(packet_id, address):
     """Send temperature data packet."""
     temp_data = round(random.uniform(-150, 130), 2)
     packet = LunarPacket(
         packet_id=packet_id,
-        packet_type=0,  # 0 = temperature
+        packet_type=0,  # Temperature
         data=temp_data
     )
-    send_packet_with_ack(packet, address)
+    send_packet(packet, SENSOR_DATA_SOCKET, address)
 
 def send_system_status(packet_id, address):
     """Send system status data."""
@@ -68,24 +43,23 @@ def send_system_status(packet_id, address):
     status_data = battery + (sys_temp / 1000)
     packet = LunarPacket(
         packet_id=packet_id,
-        packet_type=1,  # 1 = status
+        packet_type=1,  # System Status
         data=status_data
     )
-    send_packet_with_ack(packet, address)
+    send_packet(packet, UPDATES_SOCKET, address)
 
 def send_data():
     """Continuously send telemetry data."""
     temp_packet_id = 0
     status_packet_id = 1000
-    address = (EARTH_IP, EARTH_RECEIVE_PORT)
 
     while True:
-        send_temperature(temp_packet_id, address)
-        send_system_status(status_packet_id, address)
-        
+        send_temperature(temp_packet_id, (EARTH_IP, EARTH_RECEIVE_SENSOR_DATA_PORT))
+        send_system_status(status_packet_id, (EARTH_IP, EARTH_RECEIVE_UPDATES_PORT))
+
         temp_packet_id = (temp_packet_id + 1) % 1000
         status_packet_id = 1000 + ((status_packet_id + 1 - 1000) % 1000)
-        
+
         time.sleep(5)
 
 def command_server():
@@ -109,16 +83,6 @@ def command_server():
         except Exception as e:
             print(f"[MOON] Command error: {e}")
 
-
 if __name__ == "__main__":
-    print(f"""Lunar Rover System Initialized
-    Telemetry OUT: {LUNAR_SEND_PORT} → {EARTH_RECEIVE_PORT}
-    Commands IN: {EARTH_COMMAND_PORT} → {LUNAR_RECEIVE_PORT}
-    """)
-    
-    # Start command server in a separate thread
-    command_thread = threading.Thread(target=command_server, daemon=True)
-    command_thread.start()
-    
-    # Start telemetry transmission in main thread
+    threading.Thread(target=command_server, daemon=True).start()
     send_data()

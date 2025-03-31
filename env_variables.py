@@ -1,10 +1,13 @@
 LUNAR_IP = "172.20.10.2"  # Laptop A
 EARTH_IP = "172.20.10.2"  # Laptop B
-EARTH_RECEIVE_PORT = 5005    # Receives telemetry (temperature, status)
-EARTH_COMMAND_PORT = 5006    # Sends movement commands to Lunar Rover
+EARTH_RECEIVE_UPDATES_PORT = 5500    
+EARTH_COMMAND_PORT = 5502    
+EARTH_RECEIVE_SENSOR_DATA_PORT = 5501  
 
-LUNAR_RECEIVE_PORT = 5003   # Receives movement commands from Earth
-LUNAR_SEND_PORT = 5004       # Sends telemetry data back to Earth
+LUNAR_RECEIVE_PORT = 5503   
+LUNAR_SEND_UPDATES_PORT = 5504    
+LUNAR_SEND_SENSOR_DATA_PORT = 5505  
+
 
 # Channel factors
 MOON_TO_EARTH_LATENCY = 1.28  # seconds, one way delay
