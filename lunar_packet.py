@@ -64,7 +64,7 @@ class LunarPacket:
                                   data, timestamp)
         calculated_checksum = sum(packet_data) % 65536
         if calculated_checksum != checksum:
-            print(f"[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
+            print(f"\n[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
             return None  # Return None -> exceptoin will be raised in earth.py
 
         return {
