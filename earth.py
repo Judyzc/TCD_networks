@@ -33,7 +33,7 @@ def decode_timestamp(timestamp):
     """Convert Unix timestamp to readable format."""
     return time.strftime('%Y-%m-%d %H:%M:%S GMT', time.gmtime(timestamp))
 
-def telemetry_server():
+def receive_packet():
     """Handle incoming telemetry from Moon."""
     print(f"[EARTH] Telemetry server ready on UDP port {EARTH_RECEIVE_PORT}")
     while True:
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     """)
     
     # Start telemetry server in separate thread
-    telemetry_thread = threading.Thread(target=telemetry_server, daemon=True)
+    telemetry_thread = threading.Thread(target=receive_packet, daemon=True)
     telemetry_thread.start()
     
     # Run command client in main thread
