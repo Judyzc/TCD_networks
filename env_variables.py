@@ -20,3 +20,6 @@ PACKET_SIZE_LIMIT = 256  # Max payload size in bytes
 
 # if UDP
 MAX_RETRIES = 3 
+
+# sending data 
+DATA_DELAY = 20 

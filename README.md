@@ -26,3 +26,6 @@
     * Add general scanning for connections -> 4th communication type? 
     * Email advisor (w/ updates and any questions)
 
+31/3/2025: Version ? 
+- scanning 
+- movement (broken into 2 ports) 

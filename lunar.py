@@ -1,28 +1,30 @@
-import socket
 import time
-import random
 import threading
-from lunar_packet import LunarPacket
 from env_variables import *
-import channel_simulation as channel
 from MEUP_client import MEUP_client
 from MEUP_server import MEUP_server
+from utils import setup_logger, log_message
 
-def telemetry_thread(server):
+# # logs put in logs/lunar
+# filepath = setup_logger("lunar")
+
+
+def telemetry_thread(client: MEUP_client):
     """Thread function for running the telemetry server."""
     try:
-        server.send_data()
+        # uses client (sends temperature and status data to earth)
+        client.send_data()
     except Exception as e:
-        print(f"[TELEMETRY THREAD ERROR] {e}")
+        print(f"[LUNAR TELEMETRY THREAD ERROR] {e}")
 
-
-def command_thread(client):
+def command_thread(server: MEUP_server):
     """Thread function for running the command client."""
-    
     try:
-        client.command_server()
+        # uses server (receives commands from earth)
+        server.listen_for_commands()
     except Exception as e:
-        print(f"[COMMAND THREAD ERROR] {e}")
+        print(f"[LUNAR COMMAND THREAD ERROR] {e}")
+
 
 if __name__ == "__main__":
     threads = []

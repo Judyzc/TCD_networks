@@ -1,28 +1,37 @@
-import socket
 import time
 import threading
-from lunar_packet import LunarPacket
 from env_variables import *
-import channel_simulation as channel
 from MEUP_server import MEUP_server
 from MEUP_client import MEUP_client
+from utils import setup_logger, log_message
+
+# # logs put in logs/earth
+# filepath = setup_logger("earth")
 
 
-def telemetry_thread(server):
+def telemetry_thread(server: MEUP_server):
     """Thread function for running the telemetry server."""
     try:
-        server.startListening()
+        # uses server (receives temperature and status data from lunar)
+        server.listen_for_data()
     except Exception as e:
-        print(f"[TELEMETRY THREAD ERROR] {e}")
+        print(f"[EARTH TELEMETRY THREAD ERROR] {e}")
 
-
-def command_thread(client):
+def command_thread(client: MEUP_client):
     """Thread function for running the command client."""
-    
     try:
-        client.command_client()
+        # uses client (sends commands to lunar)
+        client.send_commands()
     except Exception as e:
-        print(f"[COMMAND THREAD ERROR] {e}")
+        print(f"[EARTH COMMAND THREAD ERROR] {e}")
+
+# def scanning_thread(client: MEUP_client):
+#     """Thread function for running the scanning client."""
+#     try:
+#         # uses client (scans for possible lunar rovers)
+#         client.scan_lunar() # BUILD OUT + BUILD OUT IN MAIN
+#     except Exception as e:
+#         print(f"[EARTH SCANNING THREAD ERROR] {e}")
 
 if __name__ == "__main__":
     threads = []
@@ -33,6 +42,7 @@ if __name__ == "__main__":
         Telemetry = MEUP_server(EARTH_IP, EARTH_RECEIVE_PORT)
         Commands = MEUP_client(EARTH_IP, EARTH_COMMAND_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
 
+        # Create and start telemetry thread
         t_thread = threading.Thread(target=telemetry_thread, args=(Telemetry,), daemon=True)
         t_thread.start()
         threads.append(t_thread)
