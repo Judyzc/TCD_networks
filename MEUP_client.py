@@ -145,39 +145,15 @@ class MEUP_client:
 
     def scan_ips(self, ip_list, port_list):
         """Scans a list of IPs to check if they are active on needed ports."""
+        ips = ["172.20.10.9", "172.20.10.8", "172.20.10.7", "172.20.10.6", "172.20.10.5"] 
     
-        valid_servers = []
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.settimeout(1)  
-
-        for ip in ip_list:
-            all_ports_active = True  
-            # check necessary ports
-            for port in port_list:
-                time.sleep(1)
+        while True:
+            for ip in ips:
                 try:
-                    message = "server_check"
-                    data = message.encode('utf-8')
-                    print("1")
-                    udp_socket.sendto(data, (ip, port))
-                    print("2")
-                    try:
-                        data, _ = udp_socket.recvfrom(1024) 
-                        print(f"[SCANNER] {ip}:{port} responded.")
-                    except socket.timeout:
-                        print(f"[SCANNER] {ip}:{port} did not respond.")
-                        all_ports_active = False 
-                        break
-                except Exception as e:
-                    print(f"[SCANNER] Error checking {ip}:{port}: {e}")
-                    all_ports_active = False
-                    break
-                # finally:
-                #     udp_socket.close()
-            if all_ports_active:
-                valid_servers.append(ip)
-                print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
+                    self.UDP_SOCKET.sendto(b"server_check", (ip, self.server_port))
+                    print("sent")
+                    time.sleep(1)
 
-        print(f"[SCANNER] These are all possible Servers: {valid_servers}")
-        return valid_servers
+                except Exception as e:
+                    print(f"[ROVER] Scanning error: {e}")
             
