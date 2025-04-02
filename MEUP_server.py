@@ -1,4 +1,5 @@
 import socket
+import random
 import time
 from lunar_packet import LunarPacket
 from env_variables import *
@@ -153,11 +154,44 @@ class MEUP_server:
         while True:
             try:
                 data, addr = self.UDP_SOCKET.recvfrom(1024)
-                print(f"[SERVER] Received raw data: {data} from {addr}")  # Debug print
+                message = data.decode('utf-8', errors='ignore')  # Decode with error handling
+                print(f"[SERVER] Received: '{message}' from {addr}")  # Debug print
                 
-                if data.startswith(b"server_check"):
-                    self.UDP_SOCKET.sendto(b"ACK_SERVER_CHECK", addr)
+                if message == "server_check":
+                    # Respond to server check scan
+                    self.UDP_SOCKET.sendto(b"server_active", addr)
                     print(f"[SERVER] Responded to scan from {addr}")
+                    
+                elif message == "Would you like to share data? (y/n)":
+                    # Decision to trade data - this could be based on various factors
+                    # For demonstration, we'll accept trades 70% of the time
+                    if random.random() < 0.7:  # 70% chance to accept
+                        self.UDP_SOCKET.sendto(b"y", addr)
+                        print(f"[SERVER] Accepted trade proposal from {addr}")
+                        
+                        # Prepare to receive data packets
+                        # We'll process them in the existing packet handler
+                    else:
+                        self.UDP_SOCKET.sendto(b"n", addr)
+                        print(f"[SERVER] Declined trade proposal from {addr}")
+                
+                elif len(data) == 23:  # Size of LunarPacket
+                    # This might be a LunarPacket, try to parse it
+                    try:
+                        packet_data = LunarPacket.parse(data)
+                        if packet_data and packet_data["packet_type"] == 2:  # Type 2 is for traded data
+                            print(f"[SERVER] Received trade data from {addr}: {packet_data['data']}")
+                            
+                            # Send an ACK for the received packet
+                            ack_message = str(packet_data["packet_id"]).encode()
+                            self.UDP_SOCKET.sendto(ack_message, addr)
+                            print(f"[SERVER] Sent ACK for packet ID {packet_data['packet_id']}")
+                            
+                            # Process the data as needed
+                            # For example, store it, analyze it, etc.
+                    except Exception as e:
+                        print(f"[SERVER] Error parsing packet: {e}")
+                
             except Exception as e:
                 print(f"[ROVER] Scanning error: {e}")
 

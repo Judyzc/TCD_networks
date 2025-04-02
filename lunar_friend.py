@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ReceiveScans = None
     try:
         # UDP socket
-        ReceiveScans = MEUP_server(LUNAR_FRIEND_IP, LUNAR_FRIEND_RECEIVE_PORT)
+        ReceiveScans = MEUP_server(LUNAR_FRIEND_IP, LUNAR_FRIEND_SCANNING_PORT)
 
         s_thread = threading.Thread(target=receive_scanning_thread, args=(ReceiveScans,), daemon=True) 
         s_thread.start()

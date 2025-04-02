@@ -146,9 +146,8 @@ class MEUP_client:
 
 
     def scan_ips(self, ip_list, port_list):
-        """Scans a list of IPs to check if they are active on needed ports."""
-    
         valid_servers = []
+        traders = []
         for ip in ip_list:
             # check necessary ports
             for port in port_list:
@@ -156,9 +155,7 @@ class MEUP_client:
                 try:
                     message = "server_check"
                     data = message.encode('utf-8')
-                    print("1")
                     self.UDP_SOCKET.sendto(data, (ip, port))
-                    print("2")
                     try:
                         data, _ = self.UDP_SOCKET.recvfrom(1024) 
                         print(f"[SCANNER] {ip}:{port} responded.")
@@ -170,5 +167,68 @@ class MEUP_client:
                     print(f"[SCANNER] Error checking {ip}:{port}: {e}")
 
         print(f"[SCANNER] These are all possible Servers: {valid_servers}")
-        return valid_servers
+
+        for ip in valid_servers:
+            message = "Would you like to share data? (y/n)"
+            data = message.encode('utf-8')
+            self.UDP_SOCKET.sendto(data, (ip, port))
+            try:
+                data, _ = self.UDP_SOCKET.recvfrom(1024) 
+                print(f"[SCANNER] {ip}:{port} responded.")
+                if data.decode() == "y":
+                    print(f"[SCANNER] {ip}:{port} accepted trade.")
+                    traders.append((ip, port))
+                elif data.decode() == "n":
+                    print(f"[SCANNER] {ip}:{port} declined trade.")
+                # print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
+            except socket.timeout:
+                print(f"[SCANNER] {ip}:{port} did not respond.")
+
+        trade_threads = []
+        for trader_ip, trader_port in traders:
+            def trade_with_partner(partner_ip, partner_port):
+                try:
+                    # Generate a unique packet ID for this trade
+                    trade_packet_id = random.randint(2000, 3000)
+                    # Example data packet - you may want to customize this
+                    trade_data = round(random.uniform(0, 100), 2)  # Example data to share
+                    
+                    # Create the LunarPacket with appropriate fields
+                    packet = LunarPacket(
+                        src_port=self.client_port, 
+                        dest_port=partner_port, 
+                        packet_id=trade_packet_id, 
+                        packet_type=2,  # Using type 2 for traded data
+                        data=trade_data
+                    )
+                    
+                    # Send the packet with acknowledgment
+                    partner_address = (partner_ip, partner_port)
+                    print(f"[TRADER] Sending data packet to {partner_ip}:{partner_port}")
+                    self.send_packet_with_ack(packet, partner_address)
+                    print(f"[TRADER] Completed data exchange with {partner_ip}:{partner_port}")
+                except Exception as e:
+                    print(f"[TRADER ERROR] Failed to trade with {partner_ip}:{partner_port}: {e}")
+            
+            # Create and start a new thread for each trading IP
+            thread = threading.Thread(
+                target=trade_with_partner,
+                args=(trader_ip, trader_port),
+                name=f"TradeThread-{trader_ip}:{trader_port}"
+            )
+            thread.daemon = True  # Make thread daemon so it exits when main program exits
+            thread.start()
+            trade_threads.append(thread)
+            print(f"[SCANNER] Started trading thread with {trader_ip}:{trader_port}")
+        
+        # Wait for all trading threads to complete before next scan cycle
+        for thread in trade_threads:
+            thread.join(timeout=10)  # Wait up to 10 seconds for each thread
+            
+        # Sleep before next scan cycle
+        time.sleep(10)  # Adjust the scan interval as needed
+
+
+
+        
             
