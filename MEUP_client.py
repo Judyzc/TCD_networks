@@ -147,13 +147,15 @@ class MEUP_client:
         """Scans a list of IPs to check if they are active on needed ports."""
     
         valid_servers = []
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.settimeout(1)  
+
         for ip in ip_list:
             all_ports_active = True  
             # check necessary ports
             for port in port_list:
+                time.sleep(0.1)
                 try:
-                    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    udp_socket.settimeout(1)
                     message = "server_check"
                     data = message.encode('utf-8')
                     udp_socket.sendto(data, (ip, port))

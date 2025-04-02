@@ -26,13 +26,12 @@ def command_thread(server: MEUP_server):
         print(f"[LUNAR COMMAND THREAD ERROR] {e}")
 
 
-def send_scanning_thread(client: MEUP_client, interval):
+def send_scanning_thread(client: MEUP_client):
     """Thread function for running the scanning client."""
     try:
         # keep scanning in a loop (other client function have loop in function)
         while True: 
             client.scan_ips(ip_list=LUNAR_IP_RANGE, port_list=LUNAR_PORT_RANGE)
-            time.sleep(interval)
     except Exception as e:
         print(f"[SEND - LUNAR SCANNING ERROR] {e}")
 
@@ -56,10 +55,10 @@ if __name__ == "__main__":
         SendTelemetry = MEUP_client(LUNAR_IP, LUNAR_SEND_PORT, EARTH_IP, EARTH_RECEIVE_PORT)
         ReceiveCommands = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_PORT)
         ReceiveScans = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_SCANNING_PORT)
-        SendScans = MEUP_client(LUNAR_IP, LUNAR_SEND_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_SCANNING_PORT)
+        SendScans = MEUP_client(LUNAR_IP, LUNAR_SEND_SCANNING_PORT)
 
         # Create and start scanning threads
-        scan_thread = threading.Thread(target=send_scanning_thread, args=(SendScans, 10), daemon=True) 
+        scan_thread = threading.Thread(target=send_scanning_thread, args=(SendScans,), daemon=True) 
         scan_thread.start()
         threads.append(scan_thread)
         print("[LUNAR] SEND - scanning thread started.")
