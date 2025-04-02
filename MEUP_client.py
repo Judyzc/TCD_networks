@@ -126,7 +126,7 @@ class MEUP_client:
             cmd = input("Command (FWD/BACK/LEFT/RIGHT/STOP): ").upper()
             if cmd in ["FWD", "BACK", "LEFT", "RIGHT", "STOP"]:
                 try:
-                    self.UDP_SOCKET.sendto(cmd.encode(), (self.server_ip, self.server_port))
+                    channel.send_w_delay_loss(self.UDP_SOCKET, cmd.encode(), (self.server_ip, self.server_port), 999)
                     print(f"[EARTH] Sent {cmd}")
                     # Wait for ACK
                     self.UDP_SOCKET.settimeout(2)

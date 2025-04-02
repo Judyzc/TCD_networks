@@ -128,23 +128,23 @@ class MEUP_server:
     def listen_for_commands(self):
         """Handle incoming commands via UDP."""
 
-        print(f"[MOON] Command server ready on UDP port {self.port}")
+        print(f"[ROVER] Command server ready on UDP port {self.port}")
         while True:
             try:
                 data, addr = self.UDP_SOCKET.recvfrom(1024)
                 if addr[0] != EARTH_IP:
                     continue
                 cmd = data.decode().strip()
-                print(f"[MOON] Received command: {cmd}")
+                print(f"[ROVER] Received command: {cmd}")
                 self.execute_movement(cmd)
 
                 # Send ACK back to Earth -> use own function ??? 
                 ack_message = f"ACK {cmd}".encode()
-                self.UDP_SOCKET.sendto(ack_message, (addr[0], addr[1]))
-                print(f"[MOON] ACK Sent for {cmd}")
+                channel.send_w_delay_loss(self.UDP_SOCKET, ack_message, (addr[0], addr[1]), 999)
+                print(f"[ROVER] ACK Sent for {cmd}")
 
             except Exception as e:
-                print(f"[MOON] Command error: {e}")
+                print(f"[ROVER] Command error: {e}")
 
 
 
