@@ -174,15 +174,15 @@ class MEUP_client:
             self.UDP_SOCKET.sendto(data, (ip, port))
             try:
                 data, _ = self.UDP_SOCKET.recvfrom(1024) 
-                print(f"[SCANNER] {ip}:{port} responded.")
+                print(f"\033[34m[SCANNER] {ip}:{port} responded.\033[0m")
                 if data.decode() == "y":
-                    print(f"[SCANNER] {ip}:{port} accepted trade.")
+                    print(f"\033[34m[SCANNER] {ip}:{port} accepted trade.\033[0m")
                     traders.append((ip, port))
                 elif data.decode() == "n":
-                    print(f"[SCANNER] {ip}:{port} declined trade.")
+                    print(f"\033[34m[SCANNER] {ip}:{port} declined trade.\033[0m")
                 # print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
             except socket.timeout:
-                print(f"[SCANNER] {ip}:{port} did not respond.")
+                print(f"\033[34m[SCANNER] {ip}:{port} did not respond.\033[0m")
 
         trade_threads = []
         for trader_ip, trader_port in traders:
@@ -204,11 +204,11 @@ class MEUP_client:
                     
                     # Send the packet with acknowledgment
                     partner_address = (partner_ip, partner_port)
-                    print(f"[TRADER] Sending data packet to {partner_ip}:{partner_port}")
+                    print(f"\033[34m[TRADER] Sending data packet to {partner_ip}:{partner_port}\033[0m")
                     self.send_packet_with_ack(packet, partner_address)
-                    print(f"[TRADER] Completed data exchange with {partner_ip}:{partner_port}")
+                    print(f"\033[34m[TRADER] Completed data exchange with {partner_ip}:{partner_port}\033[0m")
                 except Exception as e:
-                    print(f"[TRADER ERROR] Failed to trade with {partner_ip}:{partner_port}: {e}")
+                    print(f"\033[34m[TRADER ERROR] Failed to trade with {partner_ip}:{partner_port}: {e}\033[0m")
             
             # Create and start a new thread for each trading IP
             thread = threading.Thread(
@@ -219,14 +219,14 @@ class MEUP_client:
             thread.daemon = True  # Make thread daemon so it exits when main program exits
             thread.start()
             trade_threads.append(thread)
-            print(f"[SCANNER] Started trading thread with {trader_ip}:{trader_port}")
+            print(f"\033[34m[SCANNER] Started trading thread with {trader_ip}:{trader_port}\033[0m")
         
         # Wait for all trading threads to complete before next scan cycle
         for thread in trade_threads:
             thread.join(timeout=10)  # Wait up to 10 seconds for each thread
             
         # Sleep before next scan cycle
-        time.sleep(10)  # Adjust the scan interval as needed
+        time.sleep(30) 
 
 
 
