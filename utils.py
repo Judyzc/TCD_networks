@@ -1,4 +1,6 @@
 from timeit import default_timer as timer
+import os
+import time
 
 def timefunc(func):
     """Allows timing of a function at runtime."""
@@ -12,9 +14,12 @@ def timefunc(func):
         return results
     return inner
 
+<<<<<<< HEAD
 import os
 import time
 
+=======
+>>>>>>> 8-merge-everything
 def setup_logger(log_dir):
     """Sets up a logger that writes to a file."""
 
@@ -27,7 +32,15 @@ def setup_logger(log_dir):
     
 def log_message(log_filepath, message):
     """Write a message to a logger file."""
+<<<<<<< HEAD
     timestamp = time.strftime("%H:%M:%S", time.gmtime())
     with open(log_filepath, "a") as log_file:
         log_file.write(f"{timestamp}: " + message + "\n")
     
+=======
+    
+    timestamp = time.strftime("%H:%M:%S", time.gmtime())
+    with open(log_filepath, "a") as log_file:
+        log_file.write(f"{timestamp}: " + message + "\n")
+
+>>>>>>> 8-merge-everything

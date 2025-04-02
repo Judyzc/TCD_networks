@@ -4,7 +4,7 @@ from utils import setup_logger, log_message
 filepath = setup_logger("lunar_packet")
 
 class LunarPacket:
-    """Class for constructing and parsing packets."""
+    """Class for constructing and parsing packets: data types into bytes."""
 
     def __init__(self, src_port, dest_port, packet_id, packet_type, data):
         # UDP header
@@ -17,7 +17,6 @@ class LunarPacket:
         self.packet_type = packet_type # 1 Byte (0=temp, 1=system, etc.)
         self.data = float(data)        # 4 Bytes
         self.timestamp = int(time.time())  # 8 Bytes
-
 
     def build(self):
         """Create a binary representation of the packet, including the UDP-like header."""
@@ -66,8 +65,12 @@ class LunarPacket:
                                   data, timestamp)
         calculated_checksum = sum(packet_data) % 65536
         if calculated_checksum != checksum:
+<<<<<<< HEAD
             print(f"[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
             log_message(filepath, f"[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
+=======
+            print(f"\n[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
+>>>>>>> 8-merge-everything
             return None  # Return None -> exceptoin will be raised in earth.py
 
         return {

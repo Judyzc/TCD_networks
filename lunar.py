@@ -1,93 +1,29 @@
-import socket
 import time
-import random
 import threading
-from rover_control import execute_movement
-from lunar_packet import LunarPacket
 from env_variables import *
-import channel_simulation as channel
-from scanner import scan_ips
+from MEUP_client import MEUP_client
+from MEUP_server import MEUP_server
+from utils import setup_logger, log_message
 
-# UDP sockets for different purposes
-TELEMETRY_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-COMMAND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-COMMAND_SOCKET.bind((LUNAR_IP, LUNAR_RECEIVE_PORT))
-TELEMETRY_SOCKET.settimeout(1)
+# # logs put in logs/lunar
+# filepath = setup_logger("lunar")
 
-# Thread-safe structures
-acknowledged_packets = set()
-lock = threading.Lock()
 
-def send_packet(packet, address):
-    """Send a LunarPacket using UDP."""
+def telemetry_thread(client: MEUP_client):
+    """Thread function for running the telemetry server."""
     try:
-        packet_data = packet.build()
-        not_lost = channel.send_w_delay_loss(TELEMETRY_SOCKET, packet_data, address, packet.packet_id)
-        if not_lost:
-            print(f"[LUNAR] ID={packet.packet_id} *SENT*")
-        else:
-            print(f"[LUNAR] Packet ID={packet.packet_id} *LOST*")
-    except socket.error as e:
-        print(f"[ERROR] Failed to send packet: {e}")
+        # uses client (sends temperature and status data to earth)
+        client.send_data()
+    except Exception as e:
+        print(f"[LUNAR TELEMETRY THREAD ERROR] {e}")
 
-def send_packet_with_ack(packet, address):
-    """Send a packet and wait for an ACK."""
-    send_packet(packet, address)
-    start_time = time.time()
-    while time.time() - start_time < 5:
-        try:
-            ack_data, _ = TELEMETRY_SOCKET.recvfrom(1024)
-            try:
-                ack_id = int(ack_data.decode().strip())
-                with lock:
-                    acknowledged_packets.add(ack_id)
-                if ack_id == packet.packet_id:
-                    print(f"[LUNAR] ID={packet.packet_id} *ACK RECVD*\n")
-                    return
-            except (UnicodeDecodeError, ValueError):
-                print(f"[LUNAR] ID={packet.packet_id} *CORRUPTED ACK RECVD*")
-        except socket.timeout:
-            pass
-
-    print(f"[LUNAR] ID={packet.packet_id} *NO ACK* ->resend\n")
-    send_packet_with_ack(packet, address)
-
-def send_temperature(packet_id, address):
-    """Send temperature data packet."""
-    temp_data = round(random.uniform(-150, 130), 2)  # in Celsius
-    packet = LunarPacket(src_port=LUNAR_SEND_PORT, dest_port=EARTH_RECEIVE_PORT, 
-                         packet_id=packet_id, packet_type=0, data=temp_data)
-    send_packet_with_ack(packet, address)
-
-
-def send_system_status(packet_id, address):
-    """Package lunar rover status data (battery percentage, system temperature, any errors)."""
-    
-    battery = round(random.uniform(10, 100), 2)  # Battery %
-    sys_temp = round(random.uniform(-40, 80), 2)  # System temp in Celsius
-    status_data = battery + (sys_temp / 1000) 
-    packet = LunarPacket(src_port=LUNAR_SEND_PORT, dest_port=EARTH_RECEIVE_PORT, 
-                         packet_id=packet_id, packet_type=1, data=status_data) # type 1 for status
-    send_packet_with_ack(packet, address)
-
-
-def send_data():
-    """Continuously send telemetry data."""
-    temp_packet_id = 0
-    status_packet_id = 1000
-    address = (EARTH_IP, EARTH_RECEIVE_PORT)
-    while True:
-        send_temperature(temp_packet_id, address)
-        send_system_status(status_packet_id, address)
-        temp_packet_id += 1
-        status_packet_id += 1
-
-        if temp_packet_id > 1000:
-            temp_packet_id = 0
-        if status_packet_id > 2000:  # Keep a gap 
-            status_packet_id = 1000
-
-        time.sleep(20)
+def command_thread(server: MEUP_server):
+    """Thread function for running the command client."""
+    try:
+        # uses server (receives commands from earth)
+        server.listen_for_commands()
+    except Exception as e:
+        print(f"[LUNAR COMMAND THREAD ERROR] {e}")
 
 
 def command_server():
@@ -113,14 +49,27 @@ def command_server():
 
 
 if __name__ == "__main__":
-    print(f"""Lunar Rover System Initialized
-    Telemetry OUT: {LUNAR_SEND_PORT} → {EARTH_RECEIVE_PORT}
-    Commands IN: {EARTH_COMMAND_PORT} → {LUNAR_RECEIVE_PORT}
-    """)
-    
-    # Start command server in a separate thread
-    command_thread = threading.Thread(target=command_server, daemon=True)
-    command_thread.start()
-    
-    # Start telemetry transmission in main thread
-    send_data()
+    threads = []
+    SendTelemetry = None
+    ReceiveCommands = None
+    try:
+        # UDP socket
+        SendTelemetry = MEUP_client(LUNAR_IP, LUNAR_SEND_PORT, EARTH_IP, EARTH_RECEIVE_PORT)
+        ReceiveCommands = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_PORT)
+
+        t_thread = threading.Thread(target=telemetry_thread, args=(SendTelemetry,), daemon=True)
+        t_thread.start()
+        threads.append(t_thread)
+        print("[LUNAR] Telemetry thread started")
+        
+        # Create and start the command thread
+        c_thread = threading.Thread(target=command_thread, args=(ReceiveCommands,), daemon=True)
+        c_thread.start()
+        threads.append(c_thread)
+        print("[LUNAR] Command thread started")
+        
+        # Keep the main thread alive to allow both threads to run
+        while True:
+            time.sleep(0.1)
+    except Exception as e:
+        print(f"[LUNAR ERROR] {e} ")

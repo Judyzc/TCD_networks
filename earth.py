@@ -1,164 +1,76 @@
-# earth.py (UDP Version)
-import socket
-import threading
 import time
+import threading
 from env_variables import *
-import channel_simulation as channel
-from lunar_packet import LunarPacket
+from MEUP_server import MEUP_server
+from MEUP_client import MEUP_client
+from utils import setup_logger, log_message
 
-# UDP Sockets
-TELEMETRY_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-COMMAND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-TELEMETRY_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_PORT))
-COMMAND_SOCKET.bind((EARTH_IP, EARTH_COMMAND_PORT))
-
-received_packets = set()
-
-def send_ack(packet_id, address):
-    """Send ACK for received packet."""
-    ack_message = str(packet_id).encode()
-    not_dropped = channel.send_w_delay_loss(TELEMETRY_SOCKET, ack_message, address, packet_id)
-    if not_dropped:
-        print(f"[EARTH] ID={packet_id} *ACK Sent*")
-    else:
-        print(f"[EARTH] ID={packet_id} *ACK LOST*")
-
-def parse_system_status(data):
-    """Extract battery and system temperature."""
-    battery = int(data)
-    sys_temp = (data - battery) * 1000 - 40
-    return battery, sys_temp
+# # logs put in logs/earth
+# filepath = setup_logger("earth")
 
 
-def decode_timestamp(timestamp):
-    """Convert Unix timestamp to human-readable format."""
-    return time.strftime('%Y-%m-%d %H:%M:%S GMT', time.gmtime(timestamp))
+def telemetry_thread(server: MEUP_server):
+    """Thread function for running the telemetry server."""
+    try:
+        # uses server (receives temperature and status data from lunar)
+        server.listen_for_data()
+    except Exception as e:
+        print(f"[EARTH TELEMETRY THREAD ERROR] {e}")
 
+def command_thread(client: MEUP_client):
+    """Thread function for running the command client."""
+    try:
+        # uses client (sends commands to lunar)
+        client.send_commands()
+    except Exception as e:
+        print(f"[EARTH COMMAND THREAD ERROR] {e}")
 
-# def receive_packet():
-#     """Receive Lunar Packets from Moon through TCP with a persistent connection."""
-    
-#     print("[EARTH] Listening for incoming UDP packets...\n\n")
-#     while True:
-#         try: 
-#             data, address = UDP_SOCKET.recvfrom(1024) 
-#             parsed_packet = LunarPacket.parse(data) 
-#             if parsed_packet is None: # None if checksum failed in LunarPacket
-#                 print("[EARTH] ID={packet_id} *CHECKSUM INVALID* -> skipping")
-#                 continue  # skip to next
-
-#             packet_id = parsed_packet["packet_id"]
-#             packet_type = parsed_packet["packet_type"]
-#             data_value = parsed_packet["data"]
-#             timestamp = parsed_packet["timestamp"]
-#             timestamp_str = decode_timestamp(timestamp)
-
-#             # check if the packet has already been received -> previous ACK was lost
-#             if packet_id not in received_packets:
-#                 received_packets.add(packet_id) #update the received packets
-#                 if packet_type == 0:  # Temperature
-#                     print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}")
-#                 elif packet_type == 1:  # System status
-#                     battery, sys_temp = parse_system_status(data_value)
-#                     print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}")
-#             else: 
-#                 print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
-#             # Send ACK back to sender regardless of wether it was already received or not
-#             send_ack(packet_id, address)  
-#         except Exception as e:
-#             print(f"[ERROR] Failed to receive packet: {e}")
-
-
-def receive_packet():
-    """Handle incoming telemetry from Moon."""
-    print(f"[EARTH] Telemetry server ready on UDP port {EARTH_RECEIVE_PORT}")
-    while True:
-        try:
-            data, address = TELEMETRY_SOCKET.recvfrom(1024)
-            parsed_packet = LunarPacket.parse(data)
-
-            if not isinstance(parsed_packet, dict):
-                print("[EARTH] *CHECKSUM INVALID OR BAD DATA FORMAT* -> skipping")
-                continue
-
-            packet_id = parsed_packet.get("packet_id")
-            packet_type = parsed_packet.get("packet_type")
-            data_value = parsed_packet.get("data")
-            timestamp = parsed_packet.get("timestamp")
-
-            if packet_id is None or packet_type is None:
-                print("[EARTH] *MALFORMED PACKET* -> skipping")
-                continue
-
-            timestamp_str = decode_timestamp(timestamp)
-
-            if packet_id not in received_packets:
-                received_packets.add(packet_id)
-                if packet_type == 0:
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C, Timestamp: {timestamp_str}")
-                elif packet_type == 1:
-                    battery, sys_temp = parse_system_status(data_value)
-                    print(f"\n[EARTH] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C, Timestamp: {timestamp_str}")
-            else:
-                print(f"\n[EARTH] ID={packet_id} *DUPLICATE* -> IGNORED")
-
-            send_ack(packet_id, address)
-
-        except Exception as e:
-            print(f"[ERROR] Telemetry error: {e}")
-
-
-# def telemetry_server():
-#     try:
-#         # UDP socket
-#         UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         UDP_SOCKET.bind((EARTH_IP, EARTH_RECEIVE_PORT))
-#         receive_packet()
-#     except Exception as e:
-#         print(f"[EARTH ERROR] {e} ")
-#     finally:
-#         if 'UDP_SOCKET' in locals() and UDP_SOCKET:
-#             UDP_SOCKET.close()
-#         print("[EARTH] Socket closed and program exited")
-
-
-def command_client():
-    """Send commands to Moon via UDP."""
-    time.sleep(2)  # Wait for Moon to initialize
-    print(f"[EARTH] Command client ready to send to {LUNAR_IP}:{LUNAR_RECEIVE_PORT}")
-
-    while True:
-        cmd = input("Command (FWD/BACK/LEFT/RIGHT/STOP): ").upper()
-        if cmd in ["FWD", "BACK", "LEFT", "RIGHT", "STOP"]:
-            try:
-                COMMAND_SOCKET.sendto(cmd.encode(), (LUNAR_IP, LUNAR_RECEIVE_PORT))
-                print(f"[EARTH] Sent {cmd}")
-
-                # Wait for ACK
-                COMMAND_SOCKET.settimeout(2)
-                try:
-                    ack_data, _ = COMMAND_SOCKET.recvfrom(1024)
-                    ack_message = ack_data.decode()
-                    if ack_message.startswith("ACK"):
-                        print(f"[ACK] Received: {ack_message}")
-                    else:
-                        print(f"[ERROR] Unexpected ACK format: {ack_message}")
-
-                except socket.timeout:
-                    print("[EARTH] No ACK received - command may have been lost")
-            except Exception as e:
-                print(f"[ERROR] Command failed: {e}")
-
+def scanning_thread(client: MEUP_client, interval):
+    """Thread function for running the scanning client."""
+    try:
+        # keep scanning in a loop (other client function have loop in function)
+        while True: 
+            client.scan_ips(ip_list=LUNAR_IP_RANGE, port_list=LUNAR_PORT_RANGE)
+            time.sleep(interval)
+    except Exception as e:
+        print(f"[EARTH SCANNING ERROR] {e}")
 
 if __name__ == "__main__":
-    print(f"""Earth Control System Initialized
-    Telemetry IN: {EARTH_RECEIVE_PORT}
-    Commands OUT: {EARTH_COMMAND_PORT} → {LUNAR_RECEIVE_PORT}
-    """)
-    
-    # Start telemetry server in separate thread
-    telemetry_thread = threading.Thread(target=receive_packet, daemon=True)
-    telemetry_thread.start()
-    
-    # Run command client in main thread
-    command_client()
+    threads = []
+    Telemetry = None
+    Commands = None
+    Scanning = None
+    try:
+        # UDP socket
+        Telemetry = MEUP_server(EARTH_IP, EARTH_RECEIVE_PORT)
+        Commands = MEUP_client(EARTH_IP, EARTH_COMMAND_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
+        Scanning = MEUP_client(EARTH_IP, EARTH_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
+
+        # Create and start scanning thread
+        scan_thread = threading.Thread(target=scanning_thread, args=(Scanning, 60), daemon=True) 
+        scan_thread.start()
+        threads.append(scan_thread)
+        print("[EARTH] Scanning thread started.")
+
+        # Create and start telemetry thread
+        t_thread = threading.Thread(target=telemetry_thread, args=(Telemetry,), daemon=True)
+        t_thread.start()
+        threads.append(t_thread)
+        print("[EARTH] Telemetry thread started")
+        
+        # Create and start the command thread
+        c_thread = threading.Thread(target=command_thread, args=(Commands,), daemon=True)
+        c_thread.start()
+        threads.append(c_thread)
+        print("[EARTH] Command thread started")
+        
+        # Keep the main thread alive to allow all threads to run
+        while True:
+            time.sleep(0.1)
+
+    except Exception as e:
+        print(f"[EARTH ERROR] {e} ")
+
+   
+
+
