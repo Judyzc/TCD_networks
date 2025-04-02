@@ -154,11 +154,13 @@ class MEUP_client:
             all_ports_active = True  
             # check necessary ports
             for port in port_list:
-                time.sleep(0.1)
+                time.sleep(1)
                 try:
                     message = "server_check"
                     data = message.encode('utf-8')
+                    print("1")
                     udp_socket.sendto(data, (ip, port))
+                    print("2")
                     try:
                         data, _ = udp_socket.recvfrom(1024) 
                         print(f"[SCANNER] {ip}:{port} responded.")
@@ -170,8 +172,8 @@ class MEUP_client:
                     print(f"[SCANNER] Error checking {ip}:{port}: {e}")
                     all_ports_active = False
                     break
-                finally:
-                    udp_socket.close()
+                # finally:
+                #     udp_socket.close()
             if all_ports_active:
                 valid_servers.append(ip)
                 print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
