@@ -4,11 +4,12 @@ from lunar_packet import LunarPacket
 from env_variables import *
 import channel_simulation as channel
 
-def send_ack(packet_id, conn):
+def send_ack(packet_id, sock, addr):
     """Return ACK for Lunar Packet to Moon w/ random loss."""
 
     ack_message = str(packet_id)
-    not_dropped = channel.send_w_delay_loss(conn, ack_message.encode()) # actual sending is done in the channel_send_w_dalay_loss function
+    # Pass the socket and the sender's address for the UDP reply
+    not_dropped = channel.send_w_delay_loss(sock, ack_message.encode(), addr)
     if not_dropped:
         print(f"[EARTH] Sent ACK for Packet {packet_id}")
     else: 
@@ -28,52 +29,48 @@ def decode_timestamp(timestamp):
 
 
 def receive_packet():
-    """Receive Lunar Packets from Moon through TCP with a persistent connection."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    """Receive Lunar Packets from Moon through UDP."""
+    # Create UDP socket instead of TCP
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind((EARTH_IP, EARTH_PORT))
-        s.listen(5)  # Allow multiple connections
-        print("[EARTH] Waiting for connection...")
+        print("[EARTH] Listening for UDP packets...")
 
         while True:
             try:
-                conn, addr = s.accept()
-                print(f"[EARTH] Connection established with {addr}")
-                with conn:
-                    while True:
-                        data = conn.recv(1024)
-                        if not data:
-                            break  # Exit inner loop if connection is closed
-                        packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
-                        timestamp_str = decode_timestamp(timestamp)
+                # For UDP, we directly receive data without establishing a connection
+                data, addr = s.recvfrom(1024)
+                print(f"[EARTH] Received data from {addr}")
+                
+                if data:
+                    packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
+                    timestamp_str = decode_timestamp(timestamp)
 
-                        if packet_type == 0:  # Temperature, data is temp
-                            print(f"Received Temperature: {data:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
+                    if packet_type == 0:  # Temperature, data is temp
+                        print(f"Received Temperature: {data:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
 
-                        elif packet_type == 1:  # System status
-                            battery, sys_temp = parse_system_status(data)
-                            print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
+                    elif packet_type == 1:  # System status
+                        battery, sys_temp = parse_system_status(data)
+                        print(f"Received System Status - Battery: {battery}%, System Temp: {sys_temp:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp}")
 
-                        # print(f"[EARTH] Received -> ID: {packet_id}, Type: {packet_type}, Data: {data:.2f}, Timestamp: {timestamp}")
-                        send_ack(packet_id, conn)  # Send ACK for received packet
+                    # Send ACK back to the sender
+                    send_ack(packet_id, s, addr)
             except socket.error as e:
-                print(f"[EARTH] connection with {e} failed")
-                print("Retrying connection via satellite...")
+                print(f"[EARTH] Error receiving data: {e}")
+                print("Trying satellite connection...")
                 break
     
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sat_conn:
-        sat_conn.bind((SATELLITE_IP, SATELLITE_PORT))
-        sat_conn.listen(5)  # Allow multiple connections
-        print("[EARTH] Waiting for connection...")
-
-        sconn, sat_addr = sat_conn.accept()
-        print(f"[EARTH] Connection established with satellite {sat_addr}")
+    # Create second UDP socket for satellite communication
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sat_sock:
+        sat_sock.bind((SATELLITE_IP, SATELLITE_PORT))
+        print("[EARTH] Listening for UDP packets via satellite...")
 
         try:
-            with sconn:
-                while True:
-                    data = sat_conn.recv(1024)
-                    if not data:
-                        break
+            while True:
+                # Receive data from satellite
+                data, sat_addr = sat_sock.recvfrom(1024)
+                print(f"[EARTH] Received data from satellite {sat_addr}")
+                
+                if data:
                     packet_id, packet_type, data, timestamp = LunarPacket.parse(data)
                     timestamp_str = decode_timestamp(timestamp)
 
@@ -84,7 +81,8 @@ def receive_packet():
                         battery, sys_temp = parse_system_status(data)
                         print(f"[VIA SATELLITE] Received System Status - Battery: {battery}%, System Temp: {sys_temp:.4f}°C. Packet ID: {packet_id}, Timestamp: {timestamp_str}")
                     
-                    send_ack(packet_id, sat_conn)
+                    # Send ACK back to satellite
+                    send_ack(packet_id, sat_sock, sat_addr)
         
         except socket.error as e:
             print(f"Satellite connection {e} failed")
