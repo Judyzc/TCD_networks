@@ -47,7 +47,7 @@ if __name__ == "__main__":
         Scanning = MEUP_client(EARTH_IP, EARTH_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
 
         # Create and start scanning thread
-        scan_thread = threading.Thread(target=scanning_thread, args=(Scanning, 60), daemon=True) 
+        scan_thread = threading.Thread(target=scanning_thread, args=(Scanning, 10), daemon=True) 
         scan_thread.start()
         threads.append(scan_thread)
         print("[EARTH] Scanning thread started.")

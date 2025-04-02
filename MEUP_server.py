@@ -61,14 +61,6 @@ class MEUP_server:
                 return
             try: 
                 data, address = self.UDP_SOCKET.recvfrom(1024) 
-
-                # check if UTF-8 encoded message
-                if data.startswith(b"server_check"):
-                    self.UDP_SOCKET.sendto(b"ACK_SERVER_CHECK", address)
-                    print(f"[SERVER] Responded to scan from {address}")
-                    return
-
-                # else, its a lunar_packet (BINARY data)
                 parsed_packet = LunarPacket.parse(data) 
                 # parsed_packet is None if checksum error
                 if parsed_packet is None:
@@ -153,6 +145,24 @@ class MEUP_server:
 
             except Exception as e:
                 print(f"[ROVER] Command error: {e}")
+    
+
+    def listen_for_scans(self): 
+        """Handle incoming scan checks via UDP."""
+
+        print(f"[ROVER] Scanning server ready on UDP port {self.port}")
+        while True:
+            try:
+                data, addr = self.UDP_SOCKET.recvfrom(1024)
+                # check if UTF-8 encoded message
+                if data.startswith(b"server_check"):
+                    self.UDP_SOCKET.sendto(b"ACK_SERVER_CHECK", addr)
+                    print(f"[SERVER] Responded to scan from {addr}")
+                    return
+
+            except Exception as e:
+                print(f"[ROVER] Scanning error: {e}")
+
 
 
 
