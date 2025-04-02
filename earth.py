@@ -25,32 +25,32 @@ def command_thread(client: MEUP_client):
     except Exception as e:
         print(f"[EARTH COMMAND THREAD ERROR] {e}")
 
-def scanning_thread(client: MEUP_client, interval):
-    """Thread function for running the scanning client."""
-    try:
-        # keep scanning in a loop (other client function have loop in function)
-        while True: 
-            client.scan_ips(ip_list=LUNAR_IP_RANGE, port_list=LUNAR_PORT_RANGE)
-            time.sleep(interval)
-    except Exception as e:
-        print(f"[EARTH SCANNING ERROR] {e}")
+# def scanning_thread(client: MEUP_client, interval):
+#     """Thread function for running the scanning client."""
+#     try:
+#         # keep scanning in a loop (other client function have loop in function)
+#         while True: 
+#             client.scan_ips(ip_list=LUNAR_IP_RANGE, port_list=LUNAR_PORT_RANGE)
+#             time.sleep(interval)
+#     except Exception as e:
+#         print(f"[EARTH SCANNING ERROR] {e}")
 
 if __name__ == "__main__":
     threads = []
     Telemetry = None
     Commands = None
-    Scanning = None
+    # Scanning = None
     try:
         # UDP socket
         Telemetry = MEUP_server(EARTH_IP, EARTH_RECEIVE_PORT)
         Commands = MEUP_client(EARTH_IP, EARTH_COMMAND_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
-        Scanning = MEUP_client(EARTH_IP, EARTH_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
+        # Scanning = MEUP_client(EARTH_IP, EARTH_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_PORT)
 
         # Create and start scanning thread
-        scan_thread = threading.Thread(target=scanning_thread, args=(Scanning, 10), daemon=True) 
-        scan_thread.start()
-        threads.append(scan_thread)
-        print("[EARTH] Scanning thread started.")
+        # scan_thread = threading.Thread(target=scanning_thread, args=(Scanning, 10), daemon=True) 
+        # scan_thread.start()
+        # threads.append(scan_thread)
+        # print("[EARTH] Scanning thread started.")
 
         # Create and start telemetry thread
         t_thread = threading.Thread(target=telemetry_thread, args=(Telemetry,), daemon=True)

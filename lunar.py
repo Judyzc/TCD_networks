@@ -25,14 +25,24 @@ def command_thread(server: MEUP_server):
     except Exception as e:
         print(f"[LUNAR COMMAND THREAD ERROR] {e}")
 
-def scanning_thread(server: MEUP_server, interval):
+
+def send_scanning_thread(client: MEUP_client, interval):
+    """Thread function for running the scanning client."""
+    try:
+        # keep scanning in a loop (other client function have loop in function)
+        while True: 
+            client.scan_ips(ip_list=LUNAR_IP_RANGE, port_list=LUNAR_PORT_RANGE)
+            time.sleep(interval)
+    except Exception as e:
+        print(f"[SEND - LUNAR SCANNING ERROR] {e}")
+
+def receive_scanning_thread(server: MEUP_server):
     """Thread function for running the scanning client."""
     try:
         # keep receiving scans
         server.listen_for_scans()
-        # time.sleep(interval)
     except Exception as e:
-        print(f"[LUNAR SCANNING ERROR] {e}")
+        print(f"[RECEIVE - LUNAR SCANNING ERROR] {e}")
 
 
 if __name__ == "__main__":
@@ -40,18 +50,26 @@ if __name__ == "__main__":
     SendTelemetry = None
     ReceiveCommands = None
     ReceiveScans = None
+    SendScans = None
     try:
         # UDP socket
         SendTelemetry = MEUP_client(LUNAR_IP, LUNAR_SEND_PORT, EARTH_IP, EARTH_RECEIVE_PORT)
         ReceiveCommands = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_PORT)
-        ReceiveScans = MEUP_server(LUNAR_IP, LUNAR_SCANNING_PORT)
+        ReceiveScans = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_SCANNING_PORT)
+        SendScans = MEUP_client(LUNAR_IP, LUNAR_SEND_SCANNING_PORT, LUNAR_IP, LUNAR_RECEIVE_SCANNING_PORT)
 
-        # Create and start scanning thread
-        scan_thread = threading.Thread(target=scanning_thread, args=(ReceiveScans, 10), daemon=True) 
+        # Create and start scanning threads
+        scan_thread = threading.Thread(target=send_scanning_thread, args=(SendScans, 10), daemon=True) 
         scan_thread.start()
         threads.append(scan_thread)
-        print("[LUNAR] Scanning thread started.")
+        print("[LUNAR] SEND - scanning thread started.")
 
+        s_thread = threading.Thread(target=receive_scanning_thread, args=(ReceiveScans,), daemon=True) 
+        s_thread.start()
+        threads.append(s_thread)
+        print("[LUNAR] RECEIVE - scanning thread started.")
+
+        # Create and start telemetry thread
         t_thread = threading.Thread(target=telemetry_thread, args=(SendTelemetry,), daemon=True)
         t_thread.start()
         threads.append(t_thread)

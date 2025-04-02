@@ -4,12 +4,13 @@ EARTH_IP = "127.0.0.1"  # Laptop B
 
 EARTH_RECEIVE_PORT = 5001    # server: Receives telemetry (temperature, status)
 EARTH_COMMAND_PORT = 5002    # client: Sends movement commands to Lunar Rover
-EARTH_SCANNING_PORT = 5003   # client Earth's open port for scanning for lunar IPs
+# EARTH_SCANNING_PORT = 5003   # client Earth's open port for scanning for lunar IPs
 
 LUNAR_RECEIVE_PORT = 5101    # server: Receives movement commands from Earth
-LUNAR_SCANNING_PORT = 5102   # server: Receives checking
-LUNAR_SEND_PORT = 5103       # client: Sends telemetry data back to Earth
-LUNAR_PORT_RANGE = [LUNAR_SCANNING_PORT]    # servers for lunar
+LUNAR_SEND_PORT = 5102       # client: Sends telemetry data back to Earth
+LUNAR_SEND_SCANNING_PORT = 5110 # client
+LUNAR_RECEIVE_SCANNING_PORT = 5111 # server
+LUNAR_PORT_RANGE = [LUNAR_RECEIVE_SCANNING_PORT]    # servers for lunar
 
 
 # Channel factors
