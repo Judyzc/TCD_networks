@@ -54,18 +54,18 @@ if __name__ == "__main__":
         # UDP socket
         SendTelemetry = MEUP_client(LUNAR_IP, LUNAR_SEND_PORT, EARTH_IP, EARTH_RECEIVE_PORT)
         ReceiveCommands = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_PORT)
-        ReceiveScans = MEUP_server(LUNAR_IP, LUNAR_RECEIVE_SCANNING_PORT)
-        SendScans = MEUP_client(LUNAR_IP, LUNAR_SEND_SCANNING_PORT)
+        ReceiveScans = MEUP_server(LUNAR_IP, LUNAR_SR_PORT)
+        SendScans = MEUP_client(LUNAR_IP, LUNAR_SS_PORT, LUNAR_IP, LUNAR_SR_PORT)
 
         # Create and start scanning threads
-        scan_thread = threading.Thread(target=send_scanning_thread, args=(SendScans,), daemon=True) 
-        scan_thread.start()
-        threads.append(scan_thread)
+        ss_thread = threading.Thread(target=send_scanning_thread, args=(SendScans,), daemon=True) 
+        ss_thread.start()
+        threads.append(ss_thread)
         print("[LUNAR] SEND - scanning thread started.")
 
-        s_thread = threading.Thread(target=receive_scanning_thread, args=(ReceiveScans,), daemon=True) 
-        s_thread.start()
-        threads.append(s_thread)
+        sr_thread = threading.Thread(target=receive_scanning_thread, args=(ReceiveScans,), daemon=True) 
+        sr_thread.start()
+        threads.append(sr_thread)
         print("[LUNAR] RECEIVE - scanning thread started.")
 
         # Create and start telemetry thread

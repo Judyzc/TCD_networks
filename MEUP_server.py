@@ -148,20 +148,18 @@ class MEUP_server:
     
     def listen_for_scans(self): 
         """Handle incoming scan checks via UDP."""
-        print(f"[ROVER] Scanning server ready on UDP port {self.port}")
 
+        print(f"[ROVER] Scanning server ready on UDP port {self.ip}:{self.port}")
         while True:
             try:
                 data, addr = self.UDP_SOCKET.recvfrom(1024)
-                # print(f"[SERVER] Received raw data: {data} from {addr}")  # Debug print
+                print(f"[SERVER] Received raw data: {data} from {addr}")  # Debug print
                 
                 if data.startswith(b"server_check"):
                     self.UDP_SOCKET.sendto(b"ACK_SERVER_CHECK", addr)
                     print(f"[SERVER] Responded to scan from {addr}")
             except Exception as e:
                 print(f"[ROVER] Scanning error: {e}")
-
-
 
 
 

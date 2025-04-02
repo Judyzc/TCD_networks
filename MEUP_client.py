@@ -15,14 +15,25 @@ class MEUP_client:
         self.server_ip = server_ip
         self.server_port = server_port
         self.UDP_SOCKET = None
+        self.UDP_SEND_SOCKET = None
         self.acknowledged_packets = set()
         self.lock = threading.Lock()
+
+        # receiving socket
         try:
             self.UDP_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.UDP_SOCKET.bind((self.client_ip, self.client_port))
             # Set timeout for ACK reception
             self.UDP_SOCKET.settimeout(1)
             print(f"[CLIENT] Socket initialized on {self.client_ip}:{self.client_port}")
+        except Exception as e:
+            print(f"[CLIENT ERROR] Socket initialization failed: {e}")
+            self.close()
+            raise
+
+        # sending socket -> not even bound to server, doesn't use server lol 
+        try:
+            self.UDP_SEND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except Exception as e:
             print(f"[CLIENT ERROR] Socket initialization failed: {e}")
             self.close()
@@ -147,11 +158,7 @@ class MEUP_client:
         """Scans a list of IPs to check if they are active on needed ports."""
     
         valid_servers = []
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.settimeout(1)  
-
         for ip in ip_list:
-            all_ports_active = True  
             # check necessary ports
             for port in port_list:
                 time.sleep(1)
@@ -159,24 +166,17 @@ class MEUP_client:
                     message = "server_check"
                     data = message.encode('utf-8')
                     print("1")
-                    udp_socket.sendto(data, (ip, port))
+                    self.UDP_SEND_SOCKET.sendto(data, (ip, port))
                     print("2")
                     try:
-                        data, _ = udp_socket.recvfrom(1024) 
+                        data, _ = self.UDP_SOCKET.recvfrom(1024) 
                         print(f"[SCANNER] {ip}:{port} responded.")
+                        valid_servers.append(ip)
+                        # print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
                     except socket.timeout:
                         print(f"[SCANNER] {ip}:{port} did not respond.")
-                        all_ports_active = False 
-                        break
                 except Exception as e:
                     print(f"[SCANNER] Error checking {ip}:{port}: {e}")
-                    all_ports_active = False
-                    break
-                # finally:
-                #     udp_socket.close()
-            if all_ports_active:
-                valid_servers.append(ip)
-                print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
 
         print(f"[SCANNER] These are all possible Servers: {valid_servers}")
         return valid_servers
