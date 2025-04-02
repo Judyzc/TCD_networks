@@ -61,6 +61,14 @@ class MEUP_server:
                 return
             try: 
                 data, address = self.UDP_SOCKET.recvfrom(1024) 
+
+                # check if UTF-8 encoded message
+                if data.startswith(b"server_check"):
+                    self.UDP_SOCKET.sendto(b"ACK_SERVER_CHECK", address)
+                    print(f"[SERVER] Responded to scan from {address}")
+                    return
+
+                # else, its a lunar_packet (BINARY data)
                 parsed_packet = LunarPacket.parse(data) 
                 # parsed_packet is None if checksum error
                 if parsed_packet is None:
