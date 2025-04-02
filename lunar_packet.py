@@ -2,7 +2,7 @@ import struct
 import time
 
 class LunarPacket:
-    """Class for constructing and parsing packets."""
+    """Class for constructing and parsing packets: data types into bytes."""
 
     def __init__(self, src_port, dest_port, packet_id, packet_type, data):
         # UDP header
@@ -15,7 +15,6 @@ class LunarPacket:
         self.packet_type = packet_type # 1 Byte (0=temp, 1=system, etc.)
         self.data = float(data)        # 4 Bytes
         self.timestamp = int(time.time())  # 8 Bytes
-
 
     def build(self):
         """Create a binary representation of the packet, including the UDP-like header."""

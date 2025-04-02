@@ -141,4 +141,39 @@ class MEUP_client:
                         print("[EARTH] No ACK received - command may have been lost")
                 except Exception as e:
                     print(f"[ERROR] Command failed: {e}")
+
+
+    def scan_ips(self, ip_list, port_list):
+        """Scans a list of IPs to check if they are active on needed ports."""
     
+        valid_servers = []
+        for ip in ip_list:
+            all_ports_active = True  
+            # check necessary ports
+            for port in port_list:
+                try:
+                    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    udp_socket.settimeout(1)
+                    message = "server_check"
+                    data = message.encode('utf-8')
+                    udp_socket.sendto(data, (ip, port))
+                    try:
+                        data, _ = udp_socket.recvfrom(1024) 
+                        print(f"[SCANNER] {ip}:{port} responded.")
+                    except socket.timeout:
+                        print(f"[SCANNER] {ip}:{port} did not respond.")
+                        all_ports_active = False 
+                        break
+                except Exception as e:
+                    print(f"[SCANNER] Error checking {ip}:{port}: {e}")
+                    all_ports_active = False
+                    break
+                finally:
+                    udp_socket.close()
+            if all_ports_active:
+                valid_servers.append(ip)
+                print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
+
+        print(f"[SCANNER] These are all possible Servers: {valid_servers}")
+        return valid_servers
+            
