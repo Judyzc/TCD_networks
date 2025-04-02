@@ -123,26 +123,26 @@ class MEUP_client:
 
         # Wait for Moon to initialize
         time.sleep(2)
-        print(f"[EARTH] Command client ready to send to {self.server_ip}:{self.server_port}")
+        print(f"\033[95m[EARTH] Command client ready to send to {self.server_ip}:{self.server_port}\033[0m")
         while True:
-            cmd = input("Command (FWD/BACK/LEFT/RIGHT/STOP): ").upper()
+            cmd = input("\033[95mCommand (FWD/BACK/LEFT/RIGHT/STOP): \033[0m").upper()
             if cmd in ["FWD", "BACK", "LEFT", "RIGHT", "STOP"]:
                 try:
                     channel.send_w_delay_loss(self.UDP_SOCKET, cmd.encode(), (self.server_ip, self.server_port), 999)
-                    print(f"[EARTH] Sent {cmd}")
+                    print(f"\033[95m[EARTH] Sent {cmd}\033[0m")
                     # Wait for ACK
                     self.UDP_SOCKET.settimeout(2)
                     try:
                         ack_data, _ = self.UDP_SOCKET.recvfrom(1024)
                         ack_message = ack_data.decode()
                         if ack_message.startswith("ACK"):
-                            print(f"[ACK] Received: {ack_message}")
+                            print(f"\033[95m[ACK] Received: {ack_message}\033[0m")
                         else:
-                            print(f"[ERROR] Unexpected ACK format: {ack_message}")
+                            print(f"\033[95m[ERROR] Unexpected ACK format: {ack_message}\033[0m")
                     except socket.timeout:
-                        print("[EARTH] No ACK received - command may have been lost")
+                        print("\033[95m[EARTH] No ACK received - command may have been lost\033[0m")
                 except Exception as e:
-                    print(f"[ERROR] Command failed: {e}")
+                    print(f"\033[95m[ERROR] Command failed: {e}\033[0m")
 
 
     def scan_ips(self, ip_list, port_list):
@@ -156,19 +156,19 @@ class MEUP_client:
                 try:
                     message = "server_check"
                     data = message.encode('utf-8')
-                    print("1")
+                    # print("1")
                     self.UDP_SOCKET.sendto(data, (ip, port))
-                    print("2")
+                    # print("2")
                     try:
                         data, _ = self.UDP_SOCKET.recvfrom(1024) 
-                        print(f"[SCANNER] {ip}:{port} responded.")
+                        # PRINT YELLOW
+                        print(f"\033[93m[SCANNER] {ip}:{port} responded.\033[0m")
                         valid_servers.append(ip)
-                        # print(f"[SCANNER] {ip} is a possible Server candidate (all ports responded).")
                     except socket.timeout:
-                        print(f"[SCANNER] {ip}:{port} did not respond.")
+                        print(f"\033[93m[SCANNER] {ip}:{port} did not respond.\033[0m")
                 except Exception as e:
-                    print(f"[SCANNER] Error checking {ip}:{port}: {e}")
+                    print(f"\033[93m[SCANNER] Error checking {ip}:{port}: {e}\033[0m")
 
-        print(f"[SCANNER] These are all possible Servers: {valid_servers}")
+        print(f"\033[93m[SCANNER] These are all possible Servers: {valid_servers}\033[0m")
         return valid_servers
             

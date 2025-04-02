@@ -61,25 +61,29 @@ if __name__ == "__main__":
         ss_thread = threading.Thread(target=send_scanning_thread, args=(SendScans,), daemon=True) 
         ss_thread.start()
         threads.append(ss_thread)
-        print("[LUNAR] SEND - scanning thread started.")
+        # PRINT YELLOW
+        print("\033[93m[LUNAR] SEND - scanning thread started.\033[0m")
 
         sr_thread = threading.Thread(target=receive_scanning_thread, args=(ReceiveScans,), daemon=True) 
         sr_thread.start()
         threads.append(sr_thread)
-        print("[LUNAR] RECEIVE - scanning thread started.")
+        # PRINT YELLOW
+        print("\033[93m[LUNAR] RECEIVE - scanning thread started.\033[0m")
 
         # Create and start telemetry thread
         t_thread = threading.Thread(target=telemetry_thread, args=(SendTelemetry,), daemon=True)
         t_thread.start()
         threads.append(t_thread)
-        print("[LUNAR] Telemetry thread started")
-        
+        # PRINT ORANGE
+        print("\033[38;5;214m[LUNAR] Telemetry thread started\033[0m")
+
         # Create and start the command thread
         c_thread = threading.Thread(target=command_thread, args=(ReceiveCommands,), daemon=True)
         c_thread.start()
         threads.append(c_thread)
-        print("[LUNAR] Command thread started")
-        
+        # PRINT PURPLE
+        print("\033[95m[LUNAR] Command thread started\033[0m")
+
         # Keep the main thread alive to allow both threads to run
         while True:
             time.sleep(0.1)
