@@ -80,10 +80,16 @@ class MEUP_server:
                     # temperature
                     if packet_type == 0:
                         print(f"\n\033[38;5;214m[SERVER] ID={packet_id} *RECVD* \nTemperature: {data_value:.2f}°C., Timestamp: {timestamp_str}\033[0m")
+                        # clear if over
+                        if packet_id >= 1000: 
+                            self.received_packets.clear()
                     # system status
                     elif packet_type == 1:
                         battery, sys_temp = self.parse_system_status(data_value)
                         print(f"\n\033[38;5;214m[SERVER] ID={packet_id} *RECVD* \nSystem Status - Battery: {battery}%, System Temp: {sys_temp:.2f}°C., Timestamp: {timestamp_str}\033[0m")
+                        # clear if over 
+                        if packet_id >= 2000: 
+                            self.received_packets.clear()
                 else: 
                     # ignore duplicate packets
                     print(f"\n[SERVER] ID={packet_id} *DUPLICATE* -> IGNORED")
