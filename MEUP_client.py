@@ -15,7 +15,6 @@ class MEUP_client:
         self.server_ip = server_ip
         self.server_port = server_port
         self.UDP_SOCKET = None
-        self.UDP_SEND_SOCKET = None
         self.acknowledged_packets = set()
         self.lock = threading.Lock()
 
@@ -26,14 +25,6 @@ class MEUP_client:
             # Set timeout for ACK reception
             self.UDP_SOCKET.settimeout(1)
             print(f"[CLIENT] Socket initialized on {self.client_ip}:{self.client_port}")
-        except Exception as e:
-            print(f"[CLIENT ERROR] Socket initialization failed: {e}")
-            self.close()
-            raise
-
-        # sending socket -> not even bound to server, doesn't use server lol 
-        try:
-            self.UDP_SEND_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except Exception as e:
             print(f"[CLIENT ERROR] Socket initialization failed: {e}")
             self.close()
@@ -166,7 +157,7 @@ class MEUP_client:
                     message = "server_check"
                     data = message.encode('utf-8')
                     print("1")
-                    self.UDP_SEND_SOCKET.sendto(data, (ip, port))
+                    self.UDP_SOCKET.sendto(data, (ip, port))
                     print("2")
                     try:
                         data, _ = self.UDP_SOCKET.recvfrom(1024) 
