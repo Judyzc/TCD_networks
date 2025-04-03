@@ -241,7 +241,7 @@ class MEUP_client:
             thread.join(timeout=10)  # Wait up to 10 seconds for each thread
             
         # Sleep before next scan cycle
-        time.sleep(30) 
+        time.sleep(SCANNING_DELAY) 
 
 
 

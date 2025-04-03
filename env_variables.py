@@ -33,3 +33,4 @@ MAX_RETRIES = 3
 
 # sending data 
 DATA_DELAY = 30
+SCANNING_DELAY = 45
