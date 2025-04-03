@@ -130,7 +130,7 @@ class MEUP_server:
             print("\033[95m[ROVER] Turning right...\033[0m")
             time.sleep(1)
         elif command == "STOP":
-            print
+            print("\033[95m[ROVER] Stopping...\033[0m")
 
     def listen_for_commands(self):
         """Handle incoming commands via UDP."""
