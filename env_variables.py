@@ -25,7 +25,6 @@ PACKET_LOSS_PROBABILITY = 0.1
 PACKET_LOSS_FACTOR = 0.1
 BER = 0.05
 
-
 BANDWIDTH_LIMIT = 1024  # Bytes/second (simulating limited bandwidth)
 PACKET_SIZE_LIMIT = 256  # Max payload size in bytes
 
@@ -33,4 +32,4 @@ PACKET_SIZE_LIMIT = 256  # Max payload size in bytes
 MAX_RETRIES = 3 
 
 # sending data 
-DATA_DELAY = 20 
+DATA_DELAY = 30
