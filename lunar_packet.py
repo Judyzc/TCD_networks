@@ -12,7 +12,7 @@ class LunarPacket:
         self.checksum = 0              # 2 Bytes (placeholder, calculated later)
         # Payload (Data)
         self.packet_id = packet_id     # 2 Bytes
-        self.packet_type = packet_type # 1 Byte (0=temp, 1=system, etc.)
+        self.packet_type = packet_type # 1 Byte (0=temp, 1=system)
         self.data = float(data)        # 4 Bytes
         self.timestamp = int(time.time())  # 8 Bytes
 
@@ -58,12 +58,12 @@ class LunarPacket:
         # Recalculate checksum 
         packet_data = struct.pack('!HHHH H B f Q', 
                                   src_port, dest_port, 
-                                  packet_len, 0,  # placeholder 0 for checksum 
+                                  packet_len, 0, # placeholder 0 for checksum 
                                   packet_id, packet_type, 
                                   data, timestamp)
         calculated_checksum = sum(packet_data) % 65536
         if calculated_checksum != checksum:
-            print(f"\n[ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
+            print(f"\n[LUNAR PACKET ERROR] Checksum mismatch! Expected: {calculated_checksum}, Got: {checksum}")
             return None  # Return None -> exceptoin will be raised in earth.py
 
         return {

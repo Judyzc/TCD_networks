@@ -52,8 +52,12 @@ class MEUP_client:
             print(f"[ERROR] Failed to send packet: {e}")
 
 
-    def send_packet_with_ack(self, packet, address):
+    def send_packet_with_ack(self, packet, address, attempt=1):
         """Send a packet and wait for an ACK on the same connection."""
+
+        if attempt > MAX_RETRIES:
+            print(f"[CLIENT] ID={packet.packet_id} *MAX RETRIES REACHED* - ABORTING\n")
+            return  
 
         self.send_packet(packet, address)
         start_time = time.time()
@@ -74,8 +78,8 @@ class MEUP_client:
             except socket.timeout:
                 pass
         # Resend original packet if no ACK received 
-        print(f"[CLIENT] ID={packet.packet_id} *NO ACK* ->resend\n")
-        self.send_packet_with_ack(packet, address)
+        print(f"[CLIENT] ID={packet.packet_id} *NO ACK* -> resend, ATTEMPT={attempt}\n")
+        self.send_packet_with_ack(packet, address, attempt+1)
 
 
     def send_temperature(self, packet_id, address):
