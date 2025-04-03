@@ -146,8 +146,14 @@ class MEUP_client:
 
 
     def scan_ips(self, ip_list, port_list):
+        """Scan ip_list for potential data trade partners
+
+            > Does not use channel simulation as communication is local and reliable
+        """
         valid_servers = []
         traders = []
+        
+        # Check list of ips for potential traders on set number of ports
         for ip in ip_list:
             # check necessary ports
             for port in port_list:
@@ -166,8 +172,10 @@ class MEUP_client:
                 except Exception as e:
                     print(f"\033[93m[SCANNER] Error checking {ip}:{port}: {e}\033[0m")
 
+        # Servers that are active
         print(f"\033[93m[SCANNER] These are all possible Servers: {valid_servers}\033[0m")
 
+        # Find out if servers want to trade
         for ip in valid_servers:
             message = "Would you like to share data? (y/n)"
             data = message.encode('utf-8')
@@ -185,15 +193,18 @@ class MEUP_client:
                 print(f"\033[34m[SCANNER] {ip}:{port} did not respond.\033[0m")
 
         trade_threads = []
+        # Create a new thread for trading with every trade partner
         for trader_ip, trader_port in traders:
             def trade_with_partner(partner_ip, partner_port):
                 try:
-                    # Generate a unique packet ID for this trade
-                    trade_packet_id = random.randint(2000, 3000)
-                    # Example data packet - you may want to customize this
-                    trade_data = round(random.uniform(0, 100), 2)  # Example data to share
+                    # Generate a packet ID for this trade
+                    trade_packet_id = 2000
+                    if trade_packet_id > 3000:
+                        trade_packet_id = 2000
+                    # Example data packet - random for illustrative purposes
+                    trade_data = round(random.uniform(0, 100), 2)
                     
-                    # Create the LunarPacket with appropriate fields
+                    # Create the LunarPacket
                     packet = LunarPacket(
                         src_port=self.client_port, 
                         dest_port=partner_port, 

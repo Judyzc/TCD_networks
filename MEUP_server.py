@@ -165,25 +165,23 @@ class MEUP_server:
                 print(f"\033[93m[SERVER] Received raw data: {data} from {addr}\033[0m")  # Debug print
                 
                 if message == "server_check":
-                    # Respond to server check scan
+                    # Active response -> gets added to "active" list for contact
                     self.UDP_SOCKET.sendto(b"server_active", addr)
                     print(f"\033[93m[SERVER] Responded to scan from {addr}\033[0m")
                     
                 elif message == "Would you like to share data? (y/n)":
-                    # Decision to trade data - this could be based on various factors
+                    # Decision to trade data -> this could be based on various factors,
+                    # or offer various services
                     # For demonstration, we'll accept trades 70% of the time
                     if random.random() < 0.7:  # 70% chance to accept
                         self.UDP_SOCKET.sendto(b"y", addr)
                         print(f"[SERVER] Accepted trade proposal from {addr}")
-                        
-                        # Prepare to receive data packets
-                        # We'll process them in the existing packet handler
                     else:
                         self.UDP_SOCKET.sendto(b"n", addr)
                         print(f"[SERVER] Declined trade proposal from {addr}")
                 
                 elif len(data) == 23:  # Size of LunarPacket
-                    # This might be a LunarPacket, try to parse it
+                    # might be a LunarPacket -> try to parse it
                     try:
                         packet_data = LunarPacket.parse(data)
                         if packet_data and packet_data["packet_type"] == 2:  # Type 2 is for traded data
