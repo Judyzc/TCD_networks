@@ -3,10 +3,6 @@ import threading
 from env_variables import *
 from MEUP_client import MEUP_client
 from MEUP_server import MEUP_server
-from utils import setup_logger, log_message
-
-# # logs put in logs/lunar
-# filepath = setup_logger("lunar")
 
 
 def telemetry_thread(client: MEUP_client):

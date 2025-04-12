@@ -6,15 +6,15 @@ class LunarPacket:
 
     def __init__(self, src_port, dest_port, packet_id, packet_type, data):
         # UDP header
-        self.src_port = src_port       # 2 Bytes
-        self.dest_port = dest_port     # 2 Bytes
-        self.packet_len = 23           # 2 Bytes (23 for 23 Bytes in length total)
-        self.checksum = 0              # 2 Bytes (placeholder, calculated later)
+        self.src_port = src_port       
+        self.dest_port = dest_port     
+        self.packet_len = 23         
+        self.checksum = 0              
         # Payload (Data)
-        self.packet_id = packet_id     # 2 Bytes
+        self.packet_id = packet_id     
         self.packet_type = packet_type # 1 Byte (0=temp, 1=system)
-        self.data = float(data)        # 4 Bytes
-        self.timestamp = int(time.time())  # 8 Bytes
+        self.data = float(data)     
+        self.timestamp = int(time.time()) 
 
     def build(self):
         """Create a binary representation of the packet, including the UDP-like header."""

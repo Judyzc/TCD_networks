@@ -1,5 +1,9 @@
 # TCD_networks
 
+## How to Use
+To test the simulation, simply run ```python lunar.py``` in one terminal and ```python earth.py``` in another. Text input/commands can sent from Earth: "FORWARD", "BACK", "LEFT", "RIGHT", "STOP".
+
+## Rough Version History 
 1/3/2025: Version 1.1
 - super rough, check out packets.py. Run with ```python packets.py``` or ```python3 packets.py```. currently, packet building, sending, and environment simulation all in there. will move out into separate files later. a lot of code is built with help from genAI, so mostly its just for reference/outlining the concept
 - ```utils.py``` is for various utility functions, currently using the @timefunc wrapper to just keep track of function timing 
